@@ -26,7 +26,7 @@ async function seedAdmin() {
     client = new mongodb.MongoClient(mongoUri);
     await client.connect();
 
-    const db = client.db("giftech");
+    const db = client.db("recycop");
 
     // Check if super admin already exists
     const existingAdmin = await db
@@ -67,7 +67,7 @@ async function seedAdmin() {
     ];
 
     const superAdmin = {
-      email: "admin@giftech.com",
+      email: "admin@recycop.com",
       password: hashedPassword,
       firstName: "Ready",
       lastName: "Pips",

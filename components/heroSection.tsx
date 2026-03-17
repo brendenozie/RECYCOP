@@ -1,178 +1,124 @@
 "use client";
 
-import { useRef } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { ChevronRight, PlayCircle, Sparkles, Zap, ShieldCheck, Globe } from "lucide-react";
+import { motion } from "framer-motion";
+import { 
+  ArrowRightIcon, 
+  CpuChipIcon, 
+  TruckIcon, 
+  ChevronRightIcon 
+} from "@heroicons/react/24/outline";
 
-export function HeroSection() {
-  const containerRef = useRef(null);
-  
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"],
-  });
-
-  const springConfig = { stiffness: 100, damping: 30, restDelta: 0.001 };
-  
-  // Parallax offsets for different layers
-  const mainImageY = useSpring(useTransform(scrollYProgress, [0, 1], [0, -80]), springConfig);
-  const floatingCardY = useSpring(useTransform(scrollYProgress, [0, 1], [0, -180]), springConfig);
-  const bgElementY = useTransform(scrollYProgress, [0, 1], [0, 100]);
-
+export default function HeroSection() {
   return (
-    <section 
-      ref={containerRef}
-      className="relative min-h-screen flex items-center pt-24 pb-20 overflow-hidden bg-slate-50"
-    >
-      {/* --- BACKGROUND ARCHITECTURE --- */}
-      <div className="absolute inset-0 z-0">
-        {/* Engineering Grid Pattern */}
-        <div className="absolute inset-0 opacity-[0.03]" 
-             style={{ backgroundImage: `linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)`, backgroundSize: '40px 40px' }} 
-        />
-        
-        {/* Soft Ambient Orbs */}
-        <motion.div style={{ y: bgElementY }} className="absolute top-[10%] right-[5%] w-[600px] h-[600px] bg-emerald-200/20 rounded-full blur-[120px]" />
-        <motion.div style={{ y: bgElementY }} className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-200/20 rounded-full blur-[120px]" />
+    <section className="relative min-h-screen w-full overflow-hidden bg-[#3b0764] text-white">
+      {/* Background Decorative Element */}
+      <div className="absolute inset-0 z-0 opacity-20">
+        <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-purple-500 blur-[120px]" />
+        <div className="absolute top-1/2 -right-24 h-96 w-96 rounded-full bg-emerald-500 blur-[120px]" />
       </div>
 
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-8">
+      <div className="container relative z-10 mx-auto px-6 pt-32 pb-20 lg:pt-48">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
           
-          {/* --- LEFT CONTENT: TEXT & ACTION --- */}
-          <div className="flex-[1.2] text-center lg:text-left space-y-8">
-            <motion.div 
+          {/* Left Column: Copy & CTAs */}
+          <div className="lg:col-span-7">
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm backdrop-blur-sm"
+              transition={{ duration: 0.6 }}
             >
-              <Sparkles className="w-4 h-4 text-emerald-500" />
-              <span className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-500">
-                Next-Gen Engineering Campus
+              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-sm font-medium tracking-wide text-emerald-400 ring-1 ring-inset ring-white/20">
+                Organizing Africa&apos;s Waste Economy
               </span>
-            </motion.div>
-            
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-6xl md:text-8xl font-black tracking-tight text-slate-900 leading-[0.9]"
-            >
-              Building the <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-blue-600 drop-shadow-sm">
-                Digital Frontier.
-              </span>
-            </motion.h1>
-            
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-lg md:text-xl text-slate-600 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium"
-            >
-              Join 15,000+ African innovators mastering robotics, AI, and full-stack engineering through hands-on, self-paced labs.
-            </motion.p>
-
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4"
-            >
-              <Link href="/courses">
-                <Button size="lg" className="h-16 px-10 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-[0_20px_40px_-10px_rgba(16,185,129,0.3)] transition-all group">
-                  <span className="font-bold text-lg">Browse Catalog</span>
-                  <ChevronRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </Link>
               
-              <Button variant="ghost" size="lg" className="h-16 px-8 rounded-2xl text-slate-700 hover:bg-white hover:shadow-md transition-all font-bold">
-                <PlayCircle className="mr-3 w-6 h-6 text-emerald-600" />
-                Watch Campus Tour
-              </Button>
-            </motion.div>
+              <h1 className="mt-8 font-serif text-5xl font-medium leading-tight md:text-7xl lg:leading-[1.1]">
+                Bridging the Gap Between <br />
+                <span className="text-emerald-400 italic">Waste</span> & <span className="text-purple-300">Wealth</span>
+              </h1>
 
-            {/* Social Proof Stats */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              transition={{ delay: 0.5 }}
-              className="flex items-center justify-center lg:justify-start gap-8 pt-4 border-t border-slate-200 max-w-sm"
-            >
-              <div className="flex flex-col">
-                <span className="text-xl font-bold text-slate-900">98%</span>
-                <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Success Rate</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold text-slate-900">24/7</span>
-                <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Mentor Access</span>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* --- RIGHT CONTENT: THE INNOVATION STACK --- */}
-          <div className="flex-1 relative w-full aspect-square lg:aspect-auto lg:h-[700px]">
-            
-            {/* Main Center Image */}
-            <motion.div 
-              style={{ y: mainImageY }}
-              className="absolute top-[10%] right-[10%] w-[85%] h-[75%] rounded-[3rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] z-10 group"
-            >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <Image src="/robotics-lab.jpg" alt="Robotics" fill className="object-cover scale-105 group-hover:scale-110 transition-transform duration-1000" />
-            </motion.div>
-
-            {/* Floating Glass Card 1 */}
-            <motion.div 
-              style={{ y: floatingCardY }}
-              initial={{ x: 50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              className="absolute top-[5%] right-0 bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-2xl z-30 border border-white/50 flex items-start gap-4"
-            >
-              <div className="p-3 bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-200">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-black text-slate-900">800+ Active Labs</p>
-                <p className="text-xs text-slate-500 font-medium">Real-time hardware access</p>
-              </div>
-            </motion.div>
-
-            {/* Floating Glass Card 2 */}
-            <motion.div 
-              style={{ y: useTransform(scrollYProgress, [0, 1], [0, -300]) }}
-              className="absolute bottom-[15%] left-0 bg-white/90 backdrop-blur-xl p-5 rounded-3xl shadow-2xl z-30 border border-white/50 flex items-center gap-4"
-            >
-              <div className="flex -space-x-3">
-                {[1,2,3].map(i => (
-                  <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
-                    <div className="w-full h-full bg-gradient-to-br from-slate-300 to-slate-500" />
-                  </div>
-                ))}
-              </div>
-              <p className="text-[11px] font-bold text-slate-600 tracking-tight">
-                Joined by <span className="text-emerald-600">400+ students</span> today
+              <p className="mt-6 max-w-xl text-lg leading-relaxed text-purple-100/80">
+                Recyc provides the physical infrastructure while RecycOp delivers the digital intelligence. 
+                Together, we are formalizing the recycling sector through cooperative-led innovation.
               </p>
-            </motion.div>
 
-            {/* Background Accent Element */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[110%] border border-slate-200 rounded-full opacity-50 pointer-events-none" />
+              <div className="mt-10 flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-6">
+                <button className="group relative flex items-center justify-center rounded-xl bg-emerald-500 px-8 py-4 font-bold text-gray-900 transition-all hover:bg-emerald-400">
+                  Join the Cooperative
+                  <ArrowRightIcon className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                </button>
+                <button className="flex items-center justify-center rounded-xl border border-white/20 bg-white/5 px-8 py-4 font-bold backdrop-blur-sm transition-all hover:bg-white/10">
+                  Explore RecycOp
+                  <ChevronRightIcon className="ml-2 h-5 w-5 text-purple-300" />
+                </button>
+              </div>
+            </motion.div>
           </div>
 
-        </div>
-      </div>
+          {/* Right Column: Visual Concept */}
+          <div className="relative lg:col-span-5">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative aspect-square rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 to-transparent p-4 backdrop-blur-2xl"
+            >
+              {/* Abstract Visual Representing Recyc (Physical) and RecycOp (Digital) */}
+              <div className="flex h-full w-full flex-col items-center justify-center space-y-8 rounded-2xl bg-gray-950/50">
+                
+                {/* Recyc Logic (Physical) */}
+                <div className="flex w-full items-center justify-between px-8">
+                  <div className="flex items-center space-x-4">
+                    <div className="rounded-lg bg-purple-600/20 p-3 text-purple-400 ring-1 ring-purple-500/50">
+                      <TruckIcon className="h-8 w-8" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold uppercase tracking-widest text-purple-300">Recyc</p>
+                      <p className="text-xs text-purple-100/50">Physical Aggregation</p>
+                    </div>
+                  </div>
+                  <div className="h-[1px] flex-grow bg-gradient-to-r from-purple-500/50 to-emerald-500/50 mx-4" />
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-emerald-400">84%</p>
+                    <p className="text-[10px] uppercase text-emerald-400/50 font-bold">Yield Rate</p>
+                  </div>
+                </div>
 
-      {/* Modern Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden lg:flex flex-col items-center gap-3">
-        <div className="w-[1px] h-16 bg-gradient-to-b from-emerald-500 to-transparent relative overflow-hidden">
-          <motion.div 
-            animate={{ y: [0, 64] }}
-            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-            className="absolute top-0 w-full h-1/2 bg-white shadow-[0_0_10px_#10B981]"
-          />
+                {/* RecycOp Logic (Digital) */}
+                <div className="w-full px-8">
+                  <div className="rounded-xl bg-white/5 p-6 ring-1 ring-white/10">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <CpuChipIcon className="h-5 w-5 text-emerald-400" />
+                      <span className="text-sm font-semibold">RecycOp Intelligence</span>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="h-2 w-full rounded-full bg-white/5">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: "70%" }}
+                          transition={{ duration: 2, delay: 1 }}
+                          className="h-full rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]" 
+                        />
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-white/5">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: "45%" }}
+                          transition={{ duration: 2, delay: 1.2 }}
+                          className="h-full rounded-full bg-purple-500" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="absolute -bottom-6 -right-6 h-32 w-32 rounded-2xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/20 flex items-center justify-center flex-col">
+                   <p className="text-3xl font-bold text-emerald-400">12k</p>
+                   <p className="text-[10px] uppercase font-bold text-white/60">Tons Baled</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
         </div>
       </div>
     </section>

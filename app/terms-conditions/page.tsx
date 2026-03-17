@@ -1,7 +1,7 @@
 "use client";
 
 import { Navbar } from "@/components/navigation";
-import { Footer } from "@/components/footer";
+import { Footer } from "@/components/Footer";
 
 export default function TermsConditionsPage() {
   return (

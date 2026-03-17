@@ -14,7 +14,7 @@ async function inspectDatabase() {
     // console.log("🔍 Inspecting database schema...\n");
 
     const mongoUri = process.env.MONGODB_URI;
-    const dbName = process.env.MONGODB_DB_NAME || "giftech";
+    const dbName = process.env.MONGODB_DB_NAME || "recycop";
 
     client = new mongodb.MongoClient(mongoUri);
     await client.connect();

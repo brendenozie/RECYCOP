@@ -2,116 +2,100 @@
 
 import { motion } from "framer-motion";
 import { 
-  Github, 
-  Linkedin, 
-  Twitter, 
-  Youtube, 
-  Mail, 
-  MapPin, 
-  Phone,
-  Cpu,
-  ArrowRight
-} from "lucide-react";
+  GlobeAltIcon, 
+  EnvelopeIcon, 
+  PhoneIcon,
+  MapPinIcon
+} from "@heroicons/react/24/outline";
 
-const FOOTER_LINKS = {
-  Curriculum: ["Foundations", "Hardware Bridge", "Autonomous Systems", "Expert Innovation"],
-  Platform: ["Student Dashboard", "Hardware Store", "Scholarships", "Community Hub"],
-  Company: ["Our Mission", "Partnerships", "Careers", "Press Kit"],
-  Legal: ["Privacy Policy", "Terms of Service", "Lab Safety Code", "Refund Policy"]
-};
+// Mocking social icons since Heroicons doesn't have brand-specific ones
+// You can replace these with your preferred SVG icons (X, LinkedIn, etc.)
+const SocialIcon = ({ label }: { label: string }) => (
+  <div className="h-8 w-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-emerald-500 hover:text-black transition-all cursor-pointer">
+    <span className="text-[10px] font-bold uppercase">{label[0]}</span>
+  </div>
+);
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-slate-900 text-slate-300 pt-24 pb-12 overflow-hidden relative">
+    <footer className="bg-[#1a0433] pt-24 pb-12 border-t border-white/5 overflow-hidden relative">
       {/* Subtle Background Glow */}
-      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
-
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 mb-20">
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+      
+      <div className="container mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-20">
           
-          {/* --- BRAND BLOCK --- */}
-          <div className="lg:col-span-4 space-y-8">
-            <div className="flex items-center gap-3 text-white">
-              <div className="p-2 rounded-xl bg-blue-600">
-                <Cpu className="w-6 h-6" />
-              </div>
-              <span className="text-2xl font-black tracking-tighter uppercase">GIFTECH<span className="text-blue-500">.</span></span>
+          {/* Brand & Mission */}
+          <div className="md:col-span-4 space-y-6">
+            <div className="flex items-center space-x-2">
+              <div className="h-8 w-8 bg-emerald-500 rounded-lg shadow-[0_0_15px_#10b981]" />
+              <span className="text-2xl font-serif tracking-tight font-bold">Recyc<span className="text-emerald-400">Op</span></span>
             </div>
-            <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
-              Building the next generation of African engineering talent through hands-on robotics, AI, and IoT mastery. 
+            <p className="text-purple-100/50 text-sm leading-relaxed max-w-xs">
+              Building the digital and physical infrastructure for Africa’s formalized recycling economy. 
+              Efficiency. Transparency. Sustainability.
             </p>
-            <div className="flex gap-4">
-              {[Twitter, Github, Linkedin, Youtube].map((Icon, i) => (
-                <button key={i} className="h-10 w-10 rounded-full border border-slate-800 flex items-center justify-center hover:bg-white hover:text-slate-900 transition-all duration-300">
-                  <Icon className="w-4 h-4" />
-                </button>
+            <div className="flex space-x-4">
+              {['X', 'In', 'Fb'].map((social) => (
+                <SocialIcon key={social} label={social} />
               ))}
             </div>
           </div>
 
-          {/* --- LINKS GRID --- */}
-          <div className="lg:col-span-5 grid grid-cols-2 md:grid-cols-3 gap-8">
-            {Object.entries(FOOTER_LINKS).slice(0, 3).map(([category, links]) => (
-              <div key={category} className="space-y-6">
-                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white">{category}</h4>
-                <ul className="space-y-4">
-                  {links.map(link => (
-                    <li key={link}>
-                      <a href="#" className="text-sm font-medium hover:text-blue-400 transition-colors">{link}</a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+          {/* Quick Links */}
+          <div className="md:col-span-2 space-y-6">
+            <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">Platform</h4>
+            <ul className="space-y-4 text-sm text-purple-100/60 font-medium">
+              <li className="hover:text-white transition-colors cursor-pointer">Materials</li>
+              <li className="hover:text-white transition-colors cursor-pointer">RecycOp UI</li>
+              <li className="hover:text-white transition-colors cursor-pointer">Logistics</li>
+              <li className="hover:text-white transition-colors cursor-pointer">Privacy</li>
+            </ul>
           </div>
 
-          {/* --- NEWSLETTER / CONTACT --- */}
-          <div className="lg:col-span-3 space-y-8">
-            <div className="space-y-4">
-              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white">Join the Lab</h4>
-              <p className="text-xs text-slate-400">Get monthly updates on new hardware kits and scholarship openings.</p>
-              <div className="relative group">
-                <input 
-                  type="email" 
-                  placeholder="Enter email..." 
-                  className="w-full h-12 bg-slate-800 border-none rounded-xl px-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                />
-                <button className="absolute right-2 top-2 h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-500 transition-colors">
-                  <ArrowRight className="w-4 h-4 text-white" />
-                </button>
+          {/* Contact */}
+          <div className="md:col-span-3 space-y-6">
+            <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">Contact Us</h4>
+            <ul className="space-y-4 text-sm text-purple-100/60 font-medium">
+              <li className="flex items-center space-x-3">
+                <MapPinIcon className="h-4 w-4 text-emerald-500" />
+                <span>Industrial Area, Nairobi, Kenya</span>
+              </li>
+              <li className="flex items-center space-x-3">
+                <EnvelopeIcon className="h-4 w-4 text-emerald-400" />
+                <span>ops@recycop.com</span>
+              </li>
+              <li className="flex items-center space-x-3">
+                <PhoneIcon className="h-4 w-4 text-emerald-500" />
+                <span>+254 7XX XXX XXX</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Vision 2030 Badge Area */}
+          <div className="md:col-span-3">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col items-center text-center">
+              <div className="w-20 h-20 mb-4 bg-white/10 rounded-full flex items-center justify-center border border-white/10 p-2">
+                {/* Replace with your Kenya Vision 2030 logo SVG or Image */}
+                <GlobeAltIcon className="h-10 w-10 text-emerald-500 opacity-50" />
               </div>
-            </div>
-            
-            <div className="space-y-3 pt-4">
-              <div className="flex items-center gap-3 text-xs">
-                <MapPin className="w-4 h-4 text-blue-500" />
-                <span>Innovation Hub, Nairobi / Lagos</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs">
-                <Mail className="w-4 h-4 text-blue-500" />
-                <span>admissions@giftech.io</span>
-              </div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white mb-1">Proudly Aligning with</p>
+              <p className="text-sm font-serif italic text-emerald-400">Kenya Vision 2030</p>
+              <p className="text-[9px] text-white/30 mt-4 leading-tight uppercase">
+                Contributing to the Social & Economic <br /> Pillars of National Development
+              </p>
             </div>
           </div>
         </div>
 
-        {/* --- BOTTOM STATUS BAR --- */}
-        <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-6">
-             <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">System Online: v2.4.0</span>
-             </div>
-             <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
-               © {currentYear} GIFTECH Labs. All rights reserved.
-             </p>
-          </div>
-          
-          <div className="flex items-center gap-6 grayscale opacity-50 hover:opacity-100 transition-opacity">
-            <span className="text-[10px] font-black uppercase text-slate-500">Powered by</span>
-            <span className="text-sm font-black text-white">SalesmanPro</span>
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 text-[11px] font-bold uppercase tracking-widest text-white/30">
+          <p>© {currentYear} RecycOp Africa. All rights reserved.</p>
+          <div className="flex space-x-8">
+            <span className="hover:text-emerald-400 cursor-pointer transition-colors">Terms of Service</span>
+            <span className="hover:text-emerald-400 cursor-pointer transition-colors">Environmental Compliance</span>
           </div>
         </div>
       </div>

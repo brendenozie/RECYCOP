@@ -138,7 +138,7 @@ export default function LoginPage() {
     try {
       const result = await signIn("google", {
         callbackUrl:
-          formData.email === "admin@giftech.com"
+          formData.email === "admin@recycop.com"
             ? "/admin/dashboard"
             : redirectTo,
         redirect: true,

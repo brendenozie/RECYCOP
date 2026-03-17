@@ -49,7 +49,7 @@ export default function TutorDashboard() {
     { 
       id: 1, 
       name: "Fatima Zahra", 
-      email: "f.zahra@giftech.edu",
+      email: "f.zahra@recycop.edu",
       track: "Embedded Systems", 
       grade: 94, 
       labs: 12, 
@@ -60,7 +60,7 @@ export default function TutorDashboard() {
     { 
       id: 2, 
       name: "David Chen", 
-      email: "d.chen@giftech.edu",
+      email: "d.chen@recycop.edu",
       track: "Cloud Infrastructure", 
       grade: 88, 
       labs: 10, 
@@ -71,7 +71,7 @@ export default function TutorDashboard() {
     { 
       id: 3, 
       name: "Samuel Okon", 
-      email: "s.okon@giftech.edu",
+      email: "s.okon@recycop.edu",
       track: "Hardware Security", 
       grade: 76, 
       labs: 6, 
@@ -82,7 +82,7 @@ export default function TutorDashboard() {
     { 
       id: 4, 
       name: "Amina Juma", 
-      email: "a.juma@giftech.edu",
+      email: "a.juma@recycop.edu",
       track: "Robotics & AI", 
       grade: 98, 
       labs: 15, 
