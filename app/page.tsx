@@ -6,7 +6,7 @@ import { useAuth } from "@/components/auth-context";
 import { Footer } from "@/components/Footer";
 
 // Recyc & RecycOp Optimized Components
-import HeroSection from "@/components/HeroSection";
+import { HeroSection } from "@/components/HeroSection";
 import { ImpactStats } from "@/components/ImpactStats"; 
 import { InsightSection } from "@/components/InsightSection";
 import { ProcessTimeline } from "@/components/ProcessTimeline"; 
