@@ -15,7 +15,7 @@ interface AssignmentModalProps {
   isGenerating: boolean;
 }
 
-export default function CreateAssignmentModal({
+export function CreateAssignmentModal({
   isOpen,
   onClose,
   onSubmit,

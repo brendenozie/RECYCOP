@@ -14,7 +14,7 @@ interface StudentModalProps {
   isGenerating: boolean;
 }
 
-export default function StudentEnrollmentModal({
+export function StudentEnrollmentModal({
   isOpen,
   onClose,
   onSubmit,

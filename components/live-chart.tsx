@@ -20,7 +20,7 @@ declare global {
   var TradingView: any;
 }
 
-export default function LiveChart({ pair }: LiveChartProps) {
+export function LiveChart({ pair }: LiveChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetRef = useRef<any>(null);
   const [signals, setSignals] = useState<Signal[]>([]);

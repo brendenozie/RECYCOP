@@ -19,7 +19,7 @@ interface PaymentProviderModalProps {
   onSelect: (provider: "whop" | "binance") => void;
 }
 
-export default function PaymentProviderModal({
+export function PaymentProviderModal({
   isOpen,
   loading,
   setLoading,

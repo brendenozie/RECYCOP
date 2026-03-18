@@ -10,7 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 
-export function HeroSection(){
+export default function HeroSection(){
   return (
     <section className="relative min-h-[95vh] w-full overflow-hidden bg-slate-50 transition-colors duration-500 dark:bg-[#0a0118] text-slate-900 dark:text-white">
       
