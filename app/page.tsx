@@ -15,7 +15,7 @@ import { ServicePortfolio } from "@/components/ServicePortfolio";
 import { PartnerTestimonials } from "@/components/PartnerTestimonials";
 import { CooperativeCTA } from "@/components/CooperativeCTA";
 import { SupportSection } from "@/components/SupportSection";
-import { Footer } from "@/components/Footer";
+import { Footer } from "@/components/footer";
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();

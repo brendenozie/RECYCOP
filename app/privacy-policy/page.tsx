@@ -1,7 +1,7 @@
 "use client";
 
 import { Navbar } from "@/components/navigation";
-import { Footer } from "@/components/Footer";
+import { Footer } from "@/components/footer";
 
 export default function PrivacyPolicyPage() {
   return (
