@@ -86,7 +86,7 @@ export function Navbar() {
             Admin Portal
           </button>
           <button 
-          onClick={() => navigate("/partner")}
+          onClick={() => navigate("/partnerdashboard")}
           className="bg-slate-900 dark:bg-emerald-500 text-white dark:text-black px-7 py-3 rounded-2xl font-bold text-[11px] uppercase tracking-widest hover:scale-[1.03] active:scale-95 transition-all shadow-lg dark:shadow-emerald-500/20">
             Partner Portal
           </button>
@@ -152,11 +152,15 @@ export function Navbar() {
                 </div>
 
                 <div className="space-y-4 pt-8 border-t border-slate-200 dark:border-white/10">
-                   <button className="w-full h-14 rounded-2xl border border-slate-200 dark:border-white/20 text-slate-900 dark:text-white font-black uppercase tracking-widest text-[10px]">
-                      Aggregator Login
+                   <button
+                    onClick={() => navigate("/partnerdashboard")}  
+                    className="w-full h-14 rounded-2xl border border-slate-200 dark:border-white/20 text-slate-900 dark:text-white font-black uppercase tracking-widest text-[10px]">
+                      Partner Login
                    </button>
-                   <button className="w-full h-14 rounded-2xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-500/20">
-                      Join Cooperative
+                   <button 
+                    onClick={() => navigate("/admindashboard")}
+                    className="w-full h-14 rounded-2xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-500/20">
+                      Admin Login
                    </button>
                 </div>
               </div>
