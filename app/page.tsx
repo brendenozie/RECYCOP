@@ -3,7 +3,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/navigation";
 import { useAuth } from "@/components/auth-context";
-import { Footer } from "@/components/Footer";
 
 // Recyc & RecycOp Optimized Components
 import  HeroSection  from "@/components/heroSection";
@@ -16,6 +15,7 @@ import { ServicePortfolio } from "@/components/ServicePortfolio";
 import { PartnerTestimonials } from "@/components/PartnerTestimonials";
 import { CooperativeCTA } from "@/components/CooperativeCTA";
 import { SupportSection } from "@/components/SupportSection";
+import { Footer } from "@/components/Footer";
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
