@@ -1,116 +1,178 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import { 
-  CubeIcon, 
-  UserGroupIcon, 
-  WrenchScrewdriverIcon, 
-  SignalIcon, 
-  CurrencyDollarIcon 
+  TruckIcon, 
+  MapPinIcon, 
+  GlobeAltIcon, 
+  ArrowsRightLeftIcon, 
+  ChartBarIcon
 } from "@heroicons/react/24/outline";
+import { cn } from "@/lib/utils";
+import { useRef } from "react";
 
-const steps = [
-  {
-    title: "Material Aggregation",
-    description: "Gathering fragmented streams of PET, HDPE, and Aluminum from informal collectors into high-volume hubs.",
-    icon: CubeIcon,
-    color: "text-purple-400",
-  },
-  {
-    title: "Cooperative Formation",
-    description: "Organizing individual actors into formal cooperatives to ensure reliable supply chains and collective bargaining power.",
-    icon: UserGroupIcon,
-    color: "text-emerald-400",
-  },
-  {
-    title: "Industrial Processing",
-    description: "Physical value-addition through high-density baling and shredding, meeting international manufacturing standards.",
-    icon: WrenchScrewdriverIcon,
-    color: "text-purple-400",
-  },
-  {
-    title: "Digital Intelligence",
-    description: "RecycOp tracks every kilogram, providing real-time logistics coordination and end-to-end material traceability.",
-    icon: SignalIcon,
-    color: "text-emerald-400",
-  },
-  {
-    title: "Market Realization",
-    description: "Connecting formalized waste streams to global industrial buyers, maximizing income for every player in the chain.",
-    icon: CurrencyDollarIcon,
-    color: "text-purple-400",
-  },
+// Stylized topological nodes for Nairobi
+const nodes = [
+  { id: 'agg1', x: 25, y: 35, type: 'aggregation', label: 'Westlands Collector Node' },
+  { id: 'agg2', x: 20, y: 70, type: 'aggregation', label: 'Kibera Cooperative Unit' },
+  { id: 'agg3', x: 45, y: 25, type: 'aggregation', label: 'Kasaranai aggregation' },
+  { id: 'hub1', x: 50, y: 55, type: 'hub', label: 'Central Nairobi Processing Hub', phase: 3 },
+  { id: 'export', x: 80, y: 65, type: 'gateway', label: 'Jomo Kenyatta Int’l Airport (JKIA) Gateway', phase: 5 },
 ];
 
-export function ProcessTimeline() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start center", "end center"],
-  });
+const paths = [
+  { from: 'agg1', to: 'hub1', delay: 0 },
+  { from: 'agg2', to: 'hub1', delay: 0.1 },
+  { from: 'agg3', to: 'hub1', delay: 0.2 },
+  { from: 'hub1', to: 'export', delay: 0.5 },
+];
 
-  // Animates the line height as the user scrolls
-  const scaleY = useTransform(scrollYProgress, [0, 1], [0, 1]);
+const liveData = [
+  { label: "Active Collectors", value: "1,240", icon: MapPinIcon, color: "emerald" },
+  { label: "Material in Transit", value: "45.2 Tonnes", icon: TruckIcon, color: "purple" },
+  { label: "Processed Inventory", value: "112.8 Tonnes", icon: ChartBarIcon, color: "emerald" },
+  { label: "Export Ready (PET)", value: "88%", icon: GlobeAltIcon, color: "purple" },
+];
+
+function Node({ x, y, type, label }: { x: number; y: number; type: string; label: string }) {
+  const isAggregation = type === 'aggregation';
+  const isHub = type === 'hub';
+  const isGateway = type === 'gateway';
 
   return (
-    <section ref={containerRef} className="py-24 bg-[#3b0764] relative overflow-hidden">
-      <div className="max-w-4xl mx-auto px-6">
+    <motion.div
+      initial={{ scale: 0, opacity: 0 }}
+      whileInView={{ scale: 1, opacity: 1 }}
+      className="absolute group"
+      style={{ left: `${x}%`, top: `${y}%` }}
+    >
+      <div className={cn(
+        "rounded-full border shadow-lg flex items-center justify-center -translate-x-1/2 -translate-y-1/2 transition-transform duration-500 group-hover:scale-110",
+        isAggregation && "h-4 w-4 bg-slate-900 dark:bg-slate-700 border-slate-700 dark:border-slate-500",
+        isHub && "h-12 w-12 bg-white dark:bg-[#120326] border-emerald-500 dark:border-emerald-500/50 p-2",
+        isGateway && "h-16 w-16 bg-white dark:bg-[#1a0433] border-purple-500 dark:border-purple-500/50 p-3"
+      )}>
+        {isAggregation && <MapPinIcon className="h-2 w-2 text-emerald-500" />}
+        {isHub && <div className="h-6 w-6 rounded-lg bg-emerald-500/10 text-emerald-400 p-1 flex items-center justify-center"> <ArrowsRightLeftIcon className="h-4 w-4" /> </div>}
+        {isGateway && <div className="h-full w-full rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center p-2"><GlobeAltIcon className="h-8 w-8" /></div>}
+      
+      </div>
+      
+      {/* Dynamic Tooltip on Hover */}
+      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 whitespace-nowrap rounded-lg bg-black/80 dark:bg-white p-2 px-3 text-[10px] text-white dark:text-black font-bold opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          {label}
+      </div>
+    </motion.div>
+  );
+}
+
+function CircuitPath({ fromX, fromY, toX, toY, delay }: { fromX: number; fromY: number; toX: number; toY: number; delay: number }) {
+  // SVG viewbox is 100x100 for percentage coordinate mapping
+  return (
+    <motion.path
+      initial={{ pathLength: 0 }}
+      whileInView={{ pathLength: 1 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 1.5, delay: delay, ease: [0.22, 1, 0.36, 1] }}
+      d={`M ${fromX} ${fromY} L ${toX} ${toY}`}
+      className="stroke-emerald-600/30 dark:stroke-emerald-400/30 hover:stroke-emerald-400 transition-colors"
+      strokeWidth="0.5"
+      fill="none"
+    />
+  );
+}
+
+export function ProcessTimeline() {
+  const mapRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <section ref={mapRef} className="relative py-32 bg-white dark:bg-[#0a0118] transition-colors duration-500 overflow-hidden">
+      
+      {/* --- Section Header (Serif Style) --- */}
+      <div className="container mx-auto px-6 mb-24 relative z-10 text-center lg:text-left">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-[0.2em] text-[10px] mb-6"
+          >
+            <MapPinIcon className="h-4 w-4" />
+            <span>Operational Visualization</span>
+          </motion.div>
+          <h2 className="font-serif text-5xl md:text-7xl text-slate-900 dark:text-white leading-[1.1] max-w-4xl mx-auto lg:mx-0">
+            Nairobi <span className="italic text-emerald-600 dark:text-emerald-400">Logistics Hub</span> &amp; Market Gateway.
+          </h2>
+      </div>
+
+      {/* --- THE MAIN VISUALIZATION HUB --- */}
+      <div className="container mx-auto px-6 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         
-        {/* Header */}
-        <div className="mb-20 text-center">
-          <h2 className="font-serif text-4xl md:text-5xl mb-6">The Path to Formalization</h2>
-          <p className="text-purple-200/70 max-w-xl mx-auto text-lg">
-            We’ve taken the successful dairy cooperative model and engineered it for the recycling revolution.
-          </p>
+        {/* LEFT: Live Data Feed (Glass Cards) */}
+        <div className="lg:col-span-3 space-y-4">
+          <div className="max-w-xs mb-8">
+            <h3 className="text-xl font-serif text-slate-900 dark:text-white mb-2">Live Node Status</h3>
+            <p className="text-sm text-slate-500 dark:text-purple-100/60 font-light leading-relaxed">
+                RecycOp’s localized intelligence data, mapped to regional operational flows.
+            </p>
+          </div>
+          
+          {liveData.map((data, i) => (
+            <motion.div 
+              key={i}
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="p-5 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-md flex items-center gap-4 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+            >
+              <div className={cn(
+                "p-3 rounded-2xl",
+                data.color === 'emerald' ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400"
+              )}>
+                <data.icon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/30 mb-1">
+                  {data.label}
+                </p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">
+                  {data.value}
+                </p>
+              </div>
+            </motion.div>
+          ))}
         </div>
 
-        <div className="relative">
-          {/* Background Track Line */}
-          <div className="absolute left-6 top-0 bottom-0 w-[2px] bg-white/10 md:left-1/2 md:-ml-[1px]" />
-          
-          {/* Animated Progress Line */}
-          <motion.div 
-            style={{ scaleY }}
-            className="absolute left-6 top-0 bottom-0 w-[2px] bg-gradient-to-b from-emerald-500 to-purple-500 origin-top md:left-1/2 md:-ml-[1px] z-10 shadow-[0_0_15px_rgba(16,185,129,0.5)]"
-          />
+        {/* RIGHT: The Topological Route Map (Nairobi Centered) */}
+        <div className="lg:col-span-9 relative">
+          <div className="aspect-[16/10] w-full rounded-[3rem] bg-slate-100 dark:bg-[#05010d] p-3 border-2 border-slate-200 dark:border-white/10 shadow-inner overflow-hidden relative">
+              
+              {/* The Map "blueprint" Grid */}
+              <div className="absolute inset-0 z-0 opacity-[0.1] dark:opacity-[0.2]">
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:50px_50px]" />
+              </div>
 
-          {/* Steps */}
-          <div className="space-y-24">
-            {steps.map((step, index) => {
-              const isEven = index % 2 === 0;
-              return (
-                <motion.div 
-                  key={index}
-                  initial={{ opacity: 0, x: isEven ? -50 : 50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                  transition={{ duration: 0.6, delay: 0.1 }}
-                  className={`relative flex items-center justify-between md:flex-row ${
-                    isEven ? "md:flex-row-reverse" : ""
-                  }`}
-                >
-                  {/* Content Card */}
-                  <div className="flex-1 ml-16 md:ml-0 md:w-5/12">
-                    <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-emerald-500/30 transition-colors group">
-                      <step.icon className={`h-8 w-8 mb-4 ${step.color} group-hover:scale-110 transition-transform`} />
-                      <h3 className="text-xl font-bold mb-2">{step.title}</h3>
-                      <p className="text-purple-100/60 leading-relaxed text-sm">
-                        {step.description}
-                      </p>
-                    </div>
-                  </div>
+              {/* Central Map SVG for Routes */}
+              <svg width="100%" height="100%" viewBox="0 0 100 100" className="absolute inset-0 z-10 pointer-events-none">
+                {paths.map((path, i) => {
+                  const fromNode = nodes.find(n => n.id === path.from);
+                  const toNode = nodes.find(n => n.id === path.to);
+                  if (!fromNode || !toNode) return null;
+                  return <CircuitPath key={i} fromX={fromNode.x} fromY={fromNode.y} toX={toNode.x} toY={toNode.y} delay={path.delay} />;
+                })}
+              </svg>
 
-                  {/* Central Node */}
-                  <div className="absolute left-6 -ml-3 w-6 h-6 rounded-full border-4 border-[#3b0764] bg-emerald-500 z-20 md:left-1/2 md:-ml-3" />
-
-                  {/* Spacer for Desktop Layout */}
-                  <div className="hidden md:block md:w-5/12" />
-                </motion.div>
-              );
-            })}
+              {/* Operational Nodes */}
+              <div className="absolute inset-0 z-20">
+                {nodes.map((node) => <Node key={node.id} {...node} />)}
+              </div>
+              
+              {/* Map Footer Label */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-slate-900 dark:bg-[#1a0433] px-6 py-2.5 border border-white/10 flex items-center gap-3 shadow-xl">
+                  <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">RecycOp Local Stream [NBO Node 112]</span>
+              </div>
           </div>
         </div>
+
       </div>
     </section>
   );

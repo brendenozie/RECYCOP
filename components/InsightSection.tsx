@@ -6,134 +6,151 @@ import {
   ArrowRightIcon,
   BeakerIcon,
   UserGroupIcon,
-  BanknotesIcon
+  BanknotesIcon,
+  CheckBadgeIcon
 } from "@heroicons/react/24/outline";
 
 const ComparisonPoints = [
   {
     label: "Collection",
-    dairy: "Morning milk delivery to local centers",
-    recyc: "Daily material drop-offs at Recyc hubs",
+    dairy: "Morning milk delivery",
+    recyc: "Daily material drop-offs",
     icon: UserGroupIcon
   },
   {
     label: "Quality Control",
-    dairy: "Lactometer & purity testing",
-    recyc: "Material grading & contamination checks",
+    dairy: "Lactometer purity testing",
+    recyc: "Digital grading & AI checks",
     icon: BeakerIcon
   },
   {
     label: "Value Add",
-    dairy: "Processing into yogurt/butter/ghee",
-    recyc: "Industrial-grade baling & shredding",
+    dairy: "Processing into Yogurt",
+    recyc: "Industrial-grade Baling",
     icon: LightBulbIcon
   },
   {
     label: "Market Power",
-    dairy: "Fixed prices through KCC/Cooperatives",
-    recyc: "Direct-to-manufacturer supply contracts",
+    dairy: "KCC Cooperative prices",
+    recyc: "Direct Manufacturer contracts",
     icon: BanknotesIcon
   }
 ];
 
 export function InsightSection() {
   return (
-    <section className="py-24 bg-[#2e0550] relative overflow-hidden">
-      {/* Background radial glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.05)_0%,transparent_70%)]" />
+    <section className="relative py-32 bg-white dark:bg-[#0a0118] transition-colors duration-500 overflow-hidden">
+      
+      {/* Background Blueprint Grid */}
+      <div className="absolute inset-0 z-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:100px_100px]" />
+      </div>
 
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="max-w-4xl mx-auto text-center mb-20">
+      <div className="container relative z-10 mx-auto px-6">
+        <div className="max-w-5xl mx-auto mb-24 text-center lg:text-left">
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center space-x-2 text-emerald-400 font-bold tracking-[0.2em] uppercase text-xs mb-4"
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 font-black uppercase tracking-[0.2em] text-[10px] mb-6"
           >
-            <LightBulbIcon className="h-5 w-5" />
-            <span>The Proven Model</span>
+            <CheckBadgeIcon className="h-4 w-4" />
+            <span>The Proven Blueprint</span>
           </motion.div>
           
-          <h2 className="font-serif text-4xl md:text-6xl text-white mb-6">
-            If it worked for <span className="text-emerald-400">Milk</span>,<br /> 
-            it will work for <span className="text-purple-300">Materials.</span>
-          </h2>
-          
-          <p className="text-purple-100/60 text-lg md:text-xl leading-relaxed">
-            The Kenyan Dairy Cooperative model revolutionized rural economies by formalizing 
-            fragmented production. We are applying this exact blueprint to the 12 million tonnes 
-            of waste generated annually.
-          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-end">
+            <h2 className="font-serif text-5xl md:text-7xl text-slate-900 dark:text-white leading-[1.1]">
+              If it worked for <span className="text-emerald-600 dark:text-emerald-400 italic">Milk</span>, 
+              it works for <span className="text-purple-600 dark:text-purple-400">Materials.</span>
+            </h2>
+            <p className="text-slate-500 dark:text-purple-100/60 text-lg font-light leading-relaxed border-l border-slate-200 dark:border-white/10 pl-8">
+              Kenya’s Dairy Cooperative model revolutionized rural economies. We are applying this exact logic to formalize the 12M tonnes of waste generated annually.
+            </p>
+          </div>
         </div>
 
-        {/* Comparison Table/Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
           
-          {/* Visual Metaphor: The Logic Bridge */}
-          <div className="space-y-6">
+          {/* LEFT: The Comparison Engine */}
+          <div className="lg:col-span-7 space-y-4">
             {ComparisonPoints.map((point, i) => (
               <motion.div 
                 key={i}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                viewport={{ once: true }}
-                className="group flex items-start space-x-4 p-4 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/10"
+                className="group relative flex items-center gap-6 p-6 rounded-[2rem] bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:border-emerald-500/30 transition-all duration-500"
               >
-                <div className="mt-1 p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+                <div className="flex-shrink-0 p-4 rounded-2xl bg-white dark:bg-white/5 shadow-sm text-slate-400 dark:text-emerald-400 group-hover:scale-110 transition-transform">
                   <point.icon className="h-6 w-6" />
                 </div>
-                <div className="flex-1">
-                  <p className="text-[10px] uppercase font-bold text-emerald-500 mb-1 tracking-widest">{point.label}</p>
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                    <span className="text-sm text-purple-200/50 line-through decoration-purple-500/50 italic">{point.dairy}</span>
-                    <ArrowRightIcon className="hidden sm:block h-3 w-3 text-emerald-500" />
-                    <span className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">{point.recyc}</span>
+                
+                <div className="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/30 mb-1">{point.label}</p>
+                    <p className="text-sm text-slate-400 dark:text-purple-100/40 line-through italic decoration-slate-300 dark:decoration-purple-500/30">
+                      {point.dairy}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <ArrowRightIcon className="hidden sm:block h-4 w-4 text-emerald-500" />
+                    <p className="text-base font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                      {point.recyc}
+                    </p>
                   </div>
                 </div>
               </motion.div>
             ))}
           </div>
 
-          {/* The "Result" Card */}
+          {/* RIGHT: The Visual Outcome Hub */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="relative p-1 rounded-3xl bg-gradient-to-br from-emerald-500/40 via-purple-500/40 to-transparent"
+            className="lg:col-span-5 relative"
           >
-            <div className="bg-[#1a0433] rounded-[22px] p-8 md:p-12 h-full flex flex-col justify-center border border-white/10">
-              <h3 className="font-serif text-3xl text-white mb-6">The Outcome?</h3>
-              <div className="space-y-8">
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-xs uppercase font-bold text-purple-300">Traditional Waste Economy</span>
-                    <span className="text-xs font-bold text-purple-300">Fragmented</span>
+            <div className="relative p-8 rounded-[3rem] bg-slate-900 dark:bg-[#1a0433] text-white shadow-2xl overflow-hidden border border-white/10">
+              {/* Decorative Glow */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[100px] -mr-32 -mt-32" />
+              
+              <h3 className="font-serif text-3xl mb-12">Systemic Transformation</h3>
+              
+              <div className="space-y-12">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-end">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Market Positioning</span>
+                    <span className="text-xs font-bold text-purple-300">Price-Takers</span>
                   </div>
-                  <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full w-1/3 bg-purple-500/50" />
+                  <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full w-1/3 bg-purple-500/40" />
                   </div>
+                  <p className="text-[11px] text-white/40">Fragmented individual collection</p>
                 </div>
 
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-xs uppercase font-bold text-emerald-400">Recyc Formalized Ecosystem</span>
-                    <span className="text-xs font-bold text-emerald-400">High Yield</span>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-end">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">Recyc Cooperative</span>
+                    <span className="text-xs font-bold text-emerald-400 uppercase">Price-Makers</span>
                   </div>
-                  <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                  <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
-                      whileInView={{ width: "92%" }}
-                      transition={{ duration: 1.5, delay: 0.5 }}
-                      className="h-full bg-emerald-500" 
+                      whileInView={{ width: "95%" }}
+                      transition={{ duration: 1.5, ease: "easeOut" }}
+                      className="h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]" 
                     />
                   </div>
+                  <p className="text-[11px] text-white/40">Aggregated supply, industrial scale</p>
                 </div>
 
-                <p className="text-sm text-purple-100/60 italic border-l-2 border-emerald-500 pl-4 py-1">
-                  &quot;By aggregating supply, we move from price-takers to price-makers, mirroring the 
-                  transformation of the Kenyan dairy sector in the 1990s.&quot;
-                </p>
+                <blockquote className="pt-8 border-t border-white/10">
+                  <p className="text-sm text-purple-100/70 italic leading-relaxed">
+                    &quot;By aggregating supply, we move from price-takers to price-makers, mirroring the transformation of the Kenyan dairy sector.&quot;
+                  </p>
+                  <footer className="mt-4 flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-emerald-500/20 border border-emerald-500/40" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white">The Model Logic</span>
+                  </footer>
+                </blockquote>
               </div>
             </div>
           </motion.div>

@@ -10,9 +10,11 @@ import {
   CircleStackIcon, 
   BoltIcon, 
   GlobeAltIcon, 
-  Squares2X2Icon 
+  Squares2X2Icon,
+  UserIcon
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
+import { navigate } from "next/dist/client/components/segment-cache/navigation";
 
 const NAV_LINKS = [
   { name: "The Model", href: "#insight", icon: CircleStackIcon },
@@ -24,6 +26,11 @@ const NAV_LINKS = [
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navigate = (url: string) => {
+    setMobileMenuOpen(false);
+    window.location.href = url;
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,55 +44,58 @@ export function Navbar() {
     <nav 
       className={cn(
         "fixed top-0 left-0 right-0 z-[100] transition-all duration-500 px-6",
-        isScrolled ? "py-4" : "py-8"
+        isScrolled ? "py-3" : "py-6"
       )}
     >
       <div className={cn(
-        "container mx-auto max-w-7xl rounded-2xl transition-all duration-500 flex items-center justify-between px-6 py-3",
+        "container mx-auto max-w-7xl rounded-[2rem] transition-all duration-500 flex items-center justify-between px-6 py-2.5",
         isScrolled 
-          ? "bg-[#3b0764]/80 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/20" 
+          ? "bg-white/70 dark:bg-[#1a0433]/80 backdrop-blur-2xl border border-slate-200 dark:border-white/10 shadow-xl dark:shadow-black/40" 
           : "bg-transparent border border-transparent"
       )}>
         
         {/* --- LOGO --- */}
         <div className="flex items-center gap-3 cursor-pointer group">
-          <div className="p-2 rounded-lg bg-emerald-500 text-black group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+          <div className="p-2 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg shadow-emerald-500/20">
             <CpuChipIcon className="w-5 h-5" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-white uppercase">
-            RECYC<span className="text-emerald-400">OP</span>
+          <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-white uppercase italic font-serif">
+            RECYC<span className="text-emerald-600 dark:text-emerald-400 not-italic font-sans">OP</span>
           </span>
         </div>
 
         {/* --- DESKTOP NAVIGATION --- */}
-        <div className="hidden lg:flex items-center gap-10">
+        <div className="hidden lg:flex items-center gap-8">
           {NAV_LINKS.map((link) => (
             <a
               key={link.name}
               href={link.href}
-              className="group relative flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-purple-100/70 hover:text-emerald-400 transition-colors"
+              className="group relative flex items-center gap-1 text-[11px] font-black uppercase tracking-[0.15em] text-slate-500 dark:text-purple-100/60 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
             >
               {link.name}
-              <ChevronDownIcon className="w-3 h-3 opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all" />
-              {/* Animated underline */}
-              <span className="absolute -bottom-1 left-0 w-0 h-px bg-emerald-400 transition-all group-hover:w-full" />
+              <span className="absolute -bottom-1 left-1/2 w-0 h-[2px] bg-emerald-500 transition-all duration-300 group-hover:w-full group-hover:left-0" />
             </a>
           ))}
         </div>
 
         {/* --- ACTION BUTTONS --- */}
-        <div className="hidden lg:flex items-center gap-4">
-          <button className="text-xs font-bold uppercase tracking-widest text-purple-100/80 px-4 py-2 hover:text-white transition-all">
-            Login
+        <div className="hidden lg:flex items-center gap-3">
+          <button
+          onClick={() => navigate("/admindashboard")}
+          className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-purple-100/80 px-4 py-2 hover:text-emerald-600 dark:hover:text-white transition-all">
+            <UserIcon className="w-4 h-4" />
+            Admin Portal
           </button>
-          <button className="bg-emerald-500 text-black px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-emerald-500/40 transition-all active:scale-95">
+          <button 
+          onClick={() => navigate("/partner")}
+          className="bg-slate-900 dark:bg-emerald-500 text-white dark:text-black px-7 py-3 rounded-2xl font-bold text-[11px] uppercase tracking-widest hover:scale-[1.03] active:scale-95 transition-all shadow-lg dark:shadow-emerald-500/20">
             Partner Portal
           </button>
         </div>
 
         {/* --- MOBILE TOGGLE --- */}
         <button 
-          className="lg:hidden p-2 text-emerald-400 hover:bg-white/5 rounded-xl transition-all"
+          className="lg:hidden p-2.5 text-slate-900 dark:text-emerald-400 bg-slate-100 dark:bg-white/5 rounded-xl transition-all"
           onClick={() => setMobileMenuOpen(true)}
         >
           <Bars3Icon className="w-6 h-6" />
@@ -101,50 +111,53 @@ export function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-md z-[110] lg:hidden"
+              className="fixed inset-0 bg-slate-900/40 dark:bg-black/80 backdrop-blur-md z-[110] lg:hidden"
             />
             
             <motion.div 
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 250 }}
-              className="fixed top-0 right-0 bottom-0 w-[85%] max-w-[400px] bg-[#1a0433] border-l border-white/10 z-[120] shadow-2xl p-8 lg:hidden"
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 bottom-0 w-[85%] max-w-[380px] bg-white dark:bg-[#0a0118] border-l border-slate-200 dark:border-white/10 z-[120] shadow-2xl p-8 lg:hidden"
             >
               <div className="flex flex-col h-full">
                 <div className="flex items-center justify-between mb-12">
-                  <span className="font-bold text-lg tracking-widest uppercase text-emerald-400">Navigation</span>
+                  <span className="font-serif italic text-2xl dark:text-emerald-400">Menu</span>
                   <button 
                     onClick={() => setMobileMenuOpen(false)}
-                    className="p-2 bg-white/5 rounded-full text-purple-200"
+                    className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-900 dark:text-purple-200"
                   >
                     <XMarkIcon className="w-6 h-6" />
                   </button>
                 </div>
 
-                <div className="space-y-4 flex-grow">
+                <div className="space-y-3 flex-grow">
                   {NAV_LINKS.map((link, i) => (
                     <motion.a
                       key={link.name}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.1 }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
                       href={link.href}
-                      className="flex items-center gap-4 p-5 rounded-2xl bg-white/5 border border-white/5 text-purple-100 font-bold hover:bg-emerald-500 hover:text-black transition-all group"
+                      className="flex items-center justify-between p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-900 dark:text-purple-100 font-bold hover:bg-emerald-500 hover:text-white dark:hover:text-black transition-all group"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <link.icon className="w-6 h-6 text-emerald-500 group-hover:text-black" />
-                      <span className="uppercase tracking-widest text-sm">{link.name}</span>
+                      <div className="flex items-center gap-4">
+                        <link.icon className="w-5 h-5 text-emerald-600 dark:text-emerald-400 group-hover:text-inherit" />
+                        <span className="uppercase tracking-[0.2em] text-xs">{link.name}</span>
+                      </div>
+                      <ChevronDownIcon className="w-4 h-4 -rotate-90 opacity-40" />
                     </motion.a>
                   ))}
                 </div>
 
-                <div className="space-y-4 pt-8 border-t border-white/10">
-                   <button className="w-full h-14 rounded-2xl border border-white/20 text-white font-bold uppercase tracking-widest text-xs">
-                     Aggregator Login
+                <div className="space-y-4 pt-8 border-t border-slate-200 dark:border-white/10">
+                   <button className="w-full h-14 rounded-2xl border border-slate-200 dark:border-white/20 text-slate-900 dark:text-white font-black uppercase tracking-widest text-[10px]">
+                      Aggregator Login
                    </button>
-                   <button className="w-full h-14 rounded-2xl bg-emerald-500 text-black font-bold uppercase tracking-widest text-xs shadow-lg shadow-emerald-500/20">
-                     Join Cooperative
+                   <button className="w-full h-14 rounded-2xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-500/20">
+                      Join Cooperative
                    </button>
                 </div>
               </div>
