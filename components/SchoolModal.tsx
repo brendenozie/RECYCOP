@@ -14,7 +14,7 @@ interface SchoolModalProps {
   isGenerating: boolean;
 }
 
-export default function SchoolModal({
+export function SchoolModal({
   isOpen,
   onClose,
   onSubmit,
