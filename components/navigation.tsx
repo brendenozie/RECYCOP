@@ -14,7 +14,6 @@ import {
   UserIcon
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
-import { navigate } from "next/dist/client/components/segment-cache/navigation";
 
 const NAV_LINKS = [
   { name: "The Model", href: "#insight", icon: CircleStackIcon },
