@@ -17,6 +17,7 @@ import {
   MapIcon
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
+import { UsersIcon } from "lucide-react";
 
 // --- Custom Components ---
 
@@ -67,6 +68,7 @@ export default function AdminDashboard() {
             { id: "hubs", label: "Regional Hubs", icon: MapIcon },
             { id: "inventory", label: "Material Ledger", icon: ArchiveBoxIcon },
             { id: "analytics", label: "Impact Reports", icon: ChartBarIcon },
+            { id: "users", label: "User Access", href: "/admin/users", icon: UsersIcon },
           ].map((item) => (
             <button
               key={item.id}

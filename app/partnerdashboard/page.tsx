@@ -12,9 +12,11 @@ import {
   MapPin,
   Clock,
   ExternalLink,
-  Layers
+  Layers,
+  ChartBarIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CubeIcon, CurrencyDollarIcon, ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 
 const inventoryBatches = [
   { id: "BATCH-ETH-001", material: "rPET Grade A", weight: "24,000kg", origin: "Nairobi Hub", purity: "99.9%", status: "In Transit" },
@@ -39,11 +41,11 @@ export default function PartnerPortal() {
 
         <nav className="flex-grow px-4 space-y-2">
           {[
-            { id: "inventory", label: "Supply Chain", icon: Layers },
-            { id: "impact", label: "ESG Reporting", icon: Leaf },
-            { id: "contracts", label: "Offtake Contracts", icon: FileText },
-            { id: "analytics", label: "Market Insights", icon: BarChart3 },
-          ].map((item) => (
+              {id: "batches", label: "My Batches", href: "/portal/batches", icon: CubeIcon },
+              {id: "finance", label: "Earnings", href: "/portal/finance", icon: CurrencyDollarIcon },
+              {id: "pickup", label: "Request Pickup", href: "/portal/pickup", icon: ArrowPathRoundedSquareIcon },
+              {id: "impact", label: "My Impact", href: "/portal/impact", icon: ChartBarIcon },
+            ].map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveView(item.id)}
