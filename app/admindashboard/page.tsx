@@ -13,7 +13,8 @@ import {
   CircleStackIcon,
   Bars3BottomLeftIcon,
   XMarkIcon,
-  IdentificationIcon
+  IdentificationIcon,
+  CurrencyDollarIcon
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ import { Analytics } from "./components/impactReports";
 import { CommandCenter } from "./components/commandCenter";
 import { SystemConfig } from "./components/systemConfig";
 import { RouteManager } from "./components/checkpoints";
+import AdminPaymentDashboard from "./components/adminPaymentDashboard";
 
 const navItems = [
   { id: "overview", label: "Command Center", icon: Squares2X2Icon },
@@ -35,6 +37,7 @@ const navItems = [
   { id: "logistics", label: "Fleet Radar", icon: TruckIcon },
   { id: "analytics", label: "Impact Reports", icon: ChartBarIcon },
   { id: "users", label: "User Access", icon: UserGroupIcon },
+  { id: "payouts", label: "Payouts", icon: CurrencyDollarIcon },
 ];
 
 export default function AdminDashboard() {
@@ -171,6 +174,7 @@ export default function AdminDashboard() {
               {activeTab === "hubs" && <Hubs />}
               {activeTab === "checkpoints" && <RouteManager />}
               {activeTab === "inventory" && <Inventory />}
+              {activeTab === "payouts" && <AdminPaymentDashboard />}
               {activeTab === "analytics" && <Analytics />}
               {activeTab === "users" && <UserAccess />}
               {activeTab === "config" && <SystemConfig />}

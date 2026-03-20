@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { 
   SparklesIcon, 
@@ -18,6 +19,22 @@ const sustainabilityBadges = [
 ];
 
 export function MyImpact() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadImpact() {
+      const res = await fetch("/api/supplier/impact?supplierId=ALPHA_01");
+      const result = await res.json();
+      setData(result);
+      setLoading(false);
+    }
+    loadImpact();
+  }, []);
+
+  if (loading) return <div className="animate-pulse">Loading Green Legacy...</div>;
+
+  
   return (
     <div className="space-y-10">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -29,6 +46,22 @@ export function MyImpact() {
           <SparklesIcon className="w-4 h-4" /> Share Impact Report
         </button>
       </header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 p-10 rounded-[3.5rem] bg-slate-900 text-white relative overflow-hidden">
+          <h3 className="text-5xl font-black italic">
+            {data?.co2Offset.toFixed(1)} <span className="text-2xl text-white/40">Metric Tons</span>
+          </h3>
+          {/* Chart uses data.weeklyTrend.map(...) */}
+        </div>
+
+        <div className="space-y-6">
+          {/* Water Saved Card */}
+          <p className="text-3xl font-black">{(data?.waterSaved / 1000).toFixed(1)}K Liters</p>
+          {/* Land Preserved Card */}
+          <p className="text-3xl font-black">{data?.landPreserved.toLocaleString()} SqM</p>
+        </div>
+      </div>
 
       {/* --- IMPACT GRID --- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
