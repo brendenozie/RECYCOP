@@ -138,7 +138,7 @@ export default function DriverMobileDashboard() {
 
       {/* --- DOCK NAV --- */}
       {/* --- DYNAMIC BOTTOM NAVIGATION DOCK --- */}
-      <nav className="fixed bottm-4 left-0 right-0 p-6 z-50">
+      <nav className="fixed bottm-0 left-0 right-0 p-6 z-50">
         <div className="mx-auto max-w-md h-24 bg-[#1a1625]/80 backdrop-blur-3xl rounded-[3rem] border border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.4)] flex items-center justify-around px-4">
           {menuItems.map((item) => (
             <button
@@ -166,24 +166,6 @@ export default function DriverMobileDashboard() {
                 <span className="text-[10px] font-black">JK</span>
              </div>
           </div>
-        </div>
-      </nav>
-
-      <nav className="fixed bottom-0 left-0 right-0 p-6 z-50">
-        <div className="mx-auto max-w-md h-24 bg-[#1a1625]/90 backdrop-blur-3xl rounded-[3rem] border border-white/10 flex items-center justify-around px-4">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={cn(
-                "relative flex flex-col items-center w-16 transition-all",
-                activeTab === item.id ? "text-emerald-500" : "text-white/30"
-              )}
-            >
-              <item.icon className="w-6 h-6" />
-              <span className="text-[7px] font-black uppercase mt-1 tracking-tighter">{item.name}</span>
-            </button>
-          ))}
         </div>
       </nav>
     </div>
