@@ -1,226 +1,158 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { 
   CubeIcon, 
-  ArrowTrendingUpIcon, 
-  BanknotesIcon, 
   TruckIcon,
-  MapPinIcon,
-  ArrowUpRightIcon,
-  EllipsisHorizontalIcon,
-  PlusIcon,
   CircleStackIcon,
   Cog6ToothIcon,
-  ArchiveBoxIcon,
   ChartBarIcon,
-  MapIcon,
-  Squares2X2Icon
+  Squares2X2Icon,
+  ArrowPathRoundedSquareIcon,
+  CurrencyDollarIcon,
+  BellIcon,
+  MagnifyingGlassIcon,
+  SunIcon
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
+
+// Component Imports
+import { SupplierOverview } from "./components/supplierOverview";
+import { MyImpact } from "./components/impact";
+import { RequestPickup } from "./components/requestPickup";
+import { MyBatches } from "./components/batches";
+import { FinancePortal } from "./components/finances";
 
 export default function SupplierDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
 
-  const stats = [
-    { label: "Total Collected", value: "142.8", unit: "TONNES", icon: CubeIcon, trend: "+12.5%", color: "text-emerald-600 dark:text-emerald-400" },
-    { label: "Pending Payout", value: "84,200", unit: "KES", icon: BanknotesIcon, trend: "Active", color: "text-purple-600 dark:text-purple-400" },
-    { label: "Active Pickups", value: "12", unit: "UNITS", icon: TruckIcon, trend: "3 Delayed", color: "text-amber-600 dark:text-amber-400" },
-  ];
-
-  const recentTransactions = [
-    { id: "RC-9021", type: "Plastic (PET)", weight: "2.4t", status: "Verified", time: "2h ago" },
-    { id: "RC-8944", type: "Aluminum", weight: "0.8t", status: "In-Transit", time: "5h ago" },
-    { id: "RC-8812", type: "Paper/Board", weight: "1.2t", status: "Processing", time: "Yesterday" },
+  const menuItems = [
+    { id: "overview", label: "Command Center", icon: Squares2X2Icon },
+    { id: "batches", label: "My Batches", icon: CubeIcon },
+    { id: "finance", label: "Earnings", icon: CurrencyDollarIcon },
+    { id: "pickup", label: "Request Pickup", icon: ArrowPathRoundedSquareIcon },
+    { id: "impact", label: "My Impact", icon: ChartBarIcon },
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-[#05010d] text-slate-900 dark:text-white font-sans antialiased selection:bg-emerald-500/30 transition-colors duration-500">
+    <div className="flex min-h-screen bg-[#fafafa] dark:bg-[#05010d] text-slate-900 dark:text-white font-sans antialiased selection:bg-emerald-500/30 overflow-hidden">
       
-      {/* --- BACKGROUND AMBIENT ELEMENTS --- */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/10 dark:bg-emerald-500/5 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 dark:bg-purple-600/5 blur-[120px] rounded-full" />
+      {/* --- CINEMATIC BACKGROUND --- */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.1, 1],
+            opacity: [0.05, 0.08, 0.05] 
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] bg-emerald-500 blur-[140px] rounded-full" 
+        />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/5 blur-[120px] rounded-full" />
       </div>
 
-      {/* --- SIDEBAR NAVIGATION --- */}
-      <aside className="w-72 border-r border-slate-200 dark:border-white/5 hidden lg:flex flex-col p-8 sticky top-0 h-screen bg-white/80 dark:bg-transparent backdrop-blur-xl transition-colors">
-        <div className="flex items-center gap-3 mb-12 group cursor-pointer">
-          <div className="h-10 w-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:rotate-6 transition-transform">
-            <CircleStackIcon className="text-white w-6 h-6" />
+      {/* --- PREMIUM SIDEBAR --- */}
+      <aside className="w-80 border-r border-slate-200/50 dark:border-white/5 hidden lg:flex flex-col p-8 sticky top-0 h-screen bg-white/40 dark:bg-transparent backdrop-blur-3xl z-20 transition-colors">
+        <div className="flex items-center gap-4 mb-16 px-2 group cursor-pointer">
+          <div className="h-12 w-12 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-emerald-500/40 group-hover:rotate-12 transition-transform duration-500">
+            <CircleStackIcon className="text-white w-7 h-7" />
           </div>
-          <span className="text-2xl font-black tracking-tighter uppercase italic font-serif">
-            RECYC<span className="text-emerald-500 not-italic font-sans">OP</span>
-          </span>
+          <div>
+            <span className="text-2xl font-black tracking-tighter uppercase italic font-serif leading-none block">
+              RECYC<span className="text-emerald-500 not-italic font-sans">OP</span>
+            </span>
+            <span className="text-[9px] font-black text-slate-400 dark:text-white/20 uppercase tracking-[0.3em]">Supplier Portal</span>
+          </div>
         </div>
 
-        <nav className="flex-grow space-y-2">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500 mb-4 px-4">System Console</p>
-          {[
-            { id: "overview", label: "Command Center", icon: Squares2X2Icon },
-            { id: "logistics", label: "Fleet Radar", icon: TruckIcon },
-            { id: "hubs", label: "Regional Hubs", icon: MapIcon },
-            { id: "inventory", label: "Material Ledger", icon: ArchiveBoxIcon },
-            { id: "analytics", label: "Impact Reports", icon: ChartBarIcon },
-          ].map((item) => (
+        <nav className="flex-grow space-y-1.5">
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400/60 mb-6 px-4">Management</p>
+          {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={cn(
-                "w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 font-bold text-[11px] uppercase tracking-widest group",
-                activeTab === item.id 
-                  ? "bg-emerald-600 text-white shadow-xl shadow-emerald-600/20" 
-                  : "text-slate-500 dark:text-white/40 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-emerald-600"
+                "w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-500 font-bold text-[11px] uppercase tracking-widest group relative",
+                activeTab === item.id ? "text-white" : "text-slate-500 dark:text-white/30 hover:text-emerald-500"
               )}
             >
-              <item.icon className={cn("w-5 h-5 transition-transform group-hover:scale-110", activeTab === item.id ? "text-white" : "")} />
-              {item.label}
+              {activeTab === item.id && (
+                <motion.div 
+                  layoutId="activeTabGlow"
+                  className="absolute inset-0 bg-emerald-600 shadow-2xl shadow-emerald-600/30 rounded-2xl z-0"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              <item.icon className={cn("w-5 h-5 relative z-10 transition-transform group-hover:scale-110", activeTab === item.id ? "text-white" : "")} />
+              <span className="relative z-10">{item.label}</span>
             </button>
           ))}
         </nav>
 
-        <div className="mt-auto pt-8 border-t border-slate-200 dark:border-white/5">
-          <button className="flex items-center gap-4 px-4 py-3 text-slate-400 dark:text-slate-500 text-[11px] font-black uppercase tracking-widest hover:text-emerald-500 transition-colors">
+        <div className="mt-auto space-y-4 pt-8 border-t border-slate-200/50 dark:border-white/5">
+          <div className="px-5 py-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 mb-4">
+             <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Impact Level</p>
+             <p className="text-xs font-bold">Carbon Pioneer (Gold)</p>
+          </div>
+          <button className="flex items-center gap-4 px-5 py-3 w-full text-slate-400 hover:text-emerald-500 text-[11px] font-black uppercase tracking-widest transition-colors">
             <Cog6ToothIcon className="w-5 h-5" />
-            System Config
+            Portal Settings
           </button>
         </div>
       </aside>
 
-      {/* --- MAIN CONTENT AREA --- */}
-      <main className="flex-grow p-8 lg:p-12 overflow-y-auto">
-        <div className="max-w-7xl mx-auto space-y-8">
+      {/* --- MAIN WORKSPACE --- */}
+      <div className="flex-grow flex flex-col h-screen relative z-10">
+        
+        {/* TOP BAR */}
+        <header className="h-24 border-b border-slate-200/50 dark:border-white/5 px-12 flex items-center justify-between bg-white/20 dark:bg-transparent backdrop-blur-md">
+          <div className="flex items-center gap-8">
+            <div className="relative w-80 group">
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="SEARCH BATCHES OR PAYOUTS..." 
+                className="w-full bg-slate-100 dark:bg-white/5 border border-transparent focus:border-emerald-500/20 rounded-xl py-3 pl-12 pr-4 text-[10px] font-bold uppercase tracking-widest outline-none transition-all"
+              />
+            </div>
+            <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/5 text-amber-600 border border-amber-500/10">
+               <SunIcon className="w-4 h-4" />
+               <span className="text-[10px] font-black uppercase tracking-widest">Nairobi 24°C</span>
+            </div>
+          </div>
           
-          {/* Header */}
-          <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <h1 className="text-3xl font-serif italic mb-1 text-slate-900 dark:text-white">
-                Supplier <span className="text-emerald-600 dark:text-emerald-400 font-sans font-black uppercase tracking-tighter not-italic">Console</span>
-              </h1>
-              <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-purple-200/40 uppercase tracking-[0.2em] font-black">
-                <MapPinIcon className="w-3 h-3 text-emerald-500" />
-                Nairobi Central Hub • Unit 04
-              </div>
+          <div className="flex items-center gap-6">
+            <button className="relative p-2 text-slate-400 hover:text-emerald-500 transition-colors">
+              <div className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full border-2 border-[#fafafa] dark:border-[#05010d]" />
+              <BellIcon className="w-6 h-6" />
+            </button>
+            <div className="h-10 w-10 rounded-xl bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 font-black text-[10px] shadow-xl">
+              AA
             </div>
-            
-            <div className="flex items-center gap-3">
-              <button className="p-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 transition-all shadow-sm">
-                <EllipsisHorizontalIcon className="w-5 h-5 text-slate-600 dark:text-white" />
-              </button>
-              <button className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white dark:text-[#0a0118] dark:bg-emerald-500 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-all">
-                <PlusIcon className="w-4 h-4" />
-                New Log
-              </button>
-            </div>
-          </header>
+          </div>
+        </header>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {stats.map((stat, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-white dark:bg-white/5 backdrop-blur-3xl border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden group shadow-sm dark:shadow-none"
+        {/* PAGE CONTENT */}
+        <main className="flex-grow p-8 lg:p-16 overflow-y-auto">
+          <div className="max-w-[1400px] mx-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 30, filter: "blur(20px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -30, filter: "blur(20px)" }}
+                transition={{ duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
               >
-                <div className="absolute top-0 right-0 p-6 text-slate-200 dark:text-white opacity-20 dark:opacity-10 group-hover:opacity-30 dark:group-hover:opacity-20 transition-opacity">
-                  <stat.icon className="w-16 h-16" />
-                </div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-purple-200/40 mb-4">{stat.label}</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white">{stat.value}</span>
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-purple-200/30">{stat.unit}</span>
-                </div>
-                <div className={`mt-4 text-[10px] font-black flex items-center gap-1 ${stat.color}`}>
-                  <ArrowTrendingUpIcon className="w-3 h-3" />
-                  {stat.trend}
-                </div>
+                {activeTab === "overview" && <SupplierOverview />}
+                {activeTab === "impact" && <MyImpact />}
+                {activeTab === "pickup" && <RequestPickup />}
+                {activeTab === "batches" && <MyBatches />}
+                {activeTab === "finance" && <FinancePortal />}
               </motion.div>
-            ))}
+            </AnimatePresence>
           </div>
-
-          {/* Bento Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            {/* Recent Activity Table */}
-            <div className="lg:col-span-8 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] overflow-hidden shadow-sm dark:shadow-none">
-              <div className="p-8 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
-                <h2 className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white">Collection Ledger</h2>
-                <button className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest hover:underline">View History</button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="text-[10px] uppercase tracking-widest text-slate-400 dark:text-purple-200/20 border-b border-slate-100 dark:border-white/5">
-                      <th className="px-8 py-4 font-black">ID</th>
-                      <th className="px-8 py-4 font-black">Material</th>
-                      <th className="px-8 py-4 font-black text-right">Net Weight</th>
-                      <th className="px-8 py-4 font-black text-center">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-sm">
-                    {recentTransactions.map((tx, i) => (
-                      <tr key={i} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group">
-                        <td className="px-8 py-6 font-mono text-slate-400 dark:text-purple-200/40 text-xs">{tx.id}</td>
-                        <td className="px-8 py-6">
-                          <div className="font-bold text-slate-900 dark:text-white">{tx.type}</div>
-                          <div className="text-[10px] text-slate-400 dark:text-purple-200/30">{tx.time}</div>
-                        </td>
-                        <td className="px-8 py-6 text-right font-black text-emerald-600 dark:text-emerald-400">{tx.weight}</td>
-                        <td className="px-8 py-6 text-center">
-                          <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
-                            {tx.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Quick Actions & Logistics */}
-            <div className="lg:col-span-4 space-y-6">
-              <div className="bg-gradient-to-br from-purple-500/5 to-emerald-500/5 dark:from-purple-600/20 dark:to-emerald-500/10 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 shadow-sm dark:shadow-none">
-                <h3 className="text-xs font-black uppercase tracking-widest mb-6 text-slate-900 dark:text-white">Logistics Hub</h3>
-                <div className="space-y-4">
-                  {[
-                    { name: "Fleet Alpha", time: "ETA: 14:00", active: true, color: "text-emerald-500" },
-                    { name: "Fleet Beta", time: "At Depot", active: false, color: "text-purple-500" }
-                  ].map((fleet, i) => (
-                    <div key={i} className={cn(
-                      "p-4 rounded-2xl bg-white dark:bg-black/40 border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm dark:shadow-none",
-                      !fleet.active && "opacity-60"
-                    )}>
-                      <div className="flex items-center gap-3">
-                        <TruckIcon className={cn("w-5 h-5", fleet.color)} />
-                        <div>
-                          <p className="text-[10px] font-black uppercase text-slate-900 dark:text-white">{fleet.name}</p>
-                          <p className="text-[10px] text-slate-400 dark:text-purple-200/30">{fleet.time}</p>
-                        </div>
-                      </div>
-                      <ArrowUpRightIcon className="w-4 h-4 text-slate-300 dark:text-purple-200/20" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 shadow-sm dark:shadow-none">
-                <h3 className="text-xs font-black uppercase tracking-widest mb-2 text-slate-900 dark:text-white">System Health</h3>
-                <p className="text-[10px] text-slate-400 dark:text-purple-200/30 mb-6 font-bold leading-relaxed">Synchronization active with RecycOp Mainframe.</p>
-                <div className="flex gap-1 h-1">
-                  {[...Array(12)].map((_, i) => (
-                    <div key={i} className={`flex-1 rounded-full ${i < 9 ? 'bg-emerald-500/40' : 'bg-slate-100 dark:bg-white/5'}`} />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
