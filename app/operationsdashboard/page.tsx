@@ -36,6 +36,7 @@ export default function OperationsDashboard() {
             <nav className="flex-grow space-y-2">
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4 px-4">System Console</p>
               {[
+                { id: "overview", label: "Overview", href: "/ops", icon: Squares2X2Icon },
                 { id: "fleet-radar", label: "Fleet Radar", href: "/ops/fleet", icon: TruckIcon },
                 { id: "checkpoints", label: "Checkpoints", href: "/ops/checkpoints", icon: ShieldCheckIcon },
                 { id: "verifications", label: "Verifications", href: "/ops/verify", icon: ArchiveBoxIcon },
