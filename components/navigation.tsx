@@ -39,10 +39,10 @@ export function Navbar() {
   const getDashboardUrl = () => {
     if (!user) return "/login";
     switch (user.role) {
-      case "admin": return "/admin/stats";
-      case "driver": return "/mobile/transit";
-      case "operations": return "/ops/verification";
-      case "supplier": return "/coop/ledger";
+      case "admin": return "/admindashboard";//admin/stats
+      case "driver": return "/driverdashboard";//mobile/transit
+      case "operations": return "/operationsdashboard";//ops/verification
+      case "supplier": return "/supplierdashboard";//coop/ledger
       default: return "/dashboard";
     }
   };

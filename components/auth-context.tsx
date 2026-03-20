@@ -96,10 +96,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Logic for role-based landing pages
     let destination = '/dashboard'; 
     
-    if (role === 'driver') destination = '/mobile/transit';
-    if (role === 'admin') destination = '/admin/stats';
-    if (role === 'operations') destination = '/ops/verification';
-    if (role === 'supplier') destination = '/coop/ledger';
+    if (role === 'driver') destination = '/driverdashboard';//mobile/transit
+    if (role === 'admin') destination = '/admindashboard';//admin/stats
+    if (role === 'operations') destination = '/operationsdashboard';//ops/verification
+    if (role === 'supplier') destination = '/supplierdashboard';//coop/ledger
 
     window.location.href = destination;
   };
