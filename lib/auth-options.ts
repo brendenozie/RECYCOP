@@ -95,6 +95,7 @@ export const authOptions: NextAuthOptions = {
             dbUser._id.toString(),
             dbUser.email,
             dbUser.role,
+            dbUser.role === "admin",
           );
         }
       }
@@ -104,7 +105,11 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token) {
         session.user.id = token.userId as string;
-        session.user.role = token.role as string;
+        session.user.role = token.role as
+          | "supplier"
+          | "admin"
+          | "operations"
+          | "driver";
         session.user.hubId = token.hubId as string;
         session.user.firstName = token.firstName as string;
         session.user.lastName = token.lastName as string;

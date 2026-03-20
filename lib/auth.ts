@@ -101,9 +101,8 @@ export async function createUser(
     hashedPassword = await hashPassword(userData.password);
   }
 
-  const user: User = {
+  const user: Omit<User, "_id"> = {
     ...userData,
-    // _id: null,
     password: hashedPassword,
     role: userData.role || "supplier",
     isAdmin: userData.role === "admin",
