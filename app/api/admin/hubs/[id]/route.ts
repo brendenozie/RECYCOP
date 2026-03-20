@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 // --- PATCH: Update Hub Configuration/Load ---
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const db = await getDatabase();
@@ -17,7 +17,7 @@ export async function PATCH(
     const result = await db
       .collection("hubs")
       .updateOne(
-        { _id: new ObjectId(params.id) },
+        { _id: new ObjectId((await params).id) },
         { $set: { ...updateData, lastUpdated: new Date() } },
       );
 
@@ -33,11 +33,13 @@ export async function PATCH(
 // --- DELETE: Decommission Hub ---
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const db = await getDatabase();
-    await db.collection("hubs").deleteOne({ _id: new ObjectId(params.id) });
+    await db
+      .collection("hubs")
+      .deleteOne({ _id: new ObjectId((await params).id) });
     return NextResponse.json({ message: "Hub decommissioned" });
   } catch (error) {
     return NextResponse.json(

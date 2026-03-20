@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 // --- PATCH: Update Existing Material ---
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const db = await getDatabase();
@@ -16,7 +16,10 @@ export async function PATCH(
 
     await db
       .collection("inventory")
-      .updateOne({ _id: new ObjectId(params.id) }, { $set: updateData });
+      .updateOne(
+        { _id: new ObjectId((await params).id) },
+        { $set: updateData },
+      );
 
     return NextResponse.json({ message: "Manifest updated successfully" });
   } catch (error) {
@@ -27,13 +30,13 @@ export async function PATCH(
 // --- DELETE: Permanently Remove Material ---
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const db = await getDatabase();
     await db
       .collection("inventory")
-      .deleteOne({ _id: new ObjectId(params.id) });
+      .deleteOne({ _id: new ObjectId((await params).id) });
 
     return NextResponse.json({ message: "Material purged from ledger" });
   } catch (error) {
