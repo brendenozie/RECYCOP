@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   MapPinIcon, 
@@ -59,41 +59,104 @@ export function Hubs() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [editingHub, setEditingHub] = useState<Hub | null>(null);
 
-  // --- CRUD OPERATIONS ---
-  const handleSaveHub = (e: React.FormEvent<HTMLFormElement>) => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  // --- 1. INITIAL FETCH ---
+  useEffect(() => {
+    async function fetchHubs() {
+      const res = await fetch('/api/admin/hubs');
+      const data = await res.json();
+      setHubs(data);
+      if (data.length > 0) setSelectedHub(data[0]);
+      setIsLoading(false);
+    }
+    fetchHubs();
+  }, []);
+
+  // --- 2. PERSISTENT SAVE ---
+  const handleSaveHub = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
-    const hubData: Hub = {
-      id: editingHub?.id || `HB-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-      name: formData.get("name") as string,
-      load: Number(formData.get("load")),
-      status: formData.get("status") as Hub["status"],
-      coords: editingHub?.coords || { x: `${Math.random() * 80 + 10}%`, y: `${Math.random() * 80 + 10}%` },
-      location: {
-        country: formData.get("country") as string,
-        city: formData.get("city") as string,
-        neighborhood: formData.get("neighborhood") as string,
-        phase: formData.get("phase") as string,
-      }
+    const hubPayload = {
+      name: formData.get("name"),
+      status: formData.get("status"),
+      load: formData.get("load"),
+      country: formData.get("country"),
+      city: formData.get("city"),
+      neighborhood: formData.get("neighborhood"),
+      phase: formData.get("phase"),
+      // Preserve coords if editing, else API generates random
+      coords: editingHub?.coords 
     };
 
-    if (editingHub) {
-      setHubs(hubs.map(h => h.id === editingHub.id ? hubData : h));
-      setSelectedHub(hubData);
-    } else {
-      setHubs([...hubs, hubData]);
+    const method = editingHub ? "PATCH" : "POST";
+    const url = editingHub ? `/api/admin/hubs/${editingHub.id}` : '/api/admin/hubs';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(hubPayload)
+    });
+
+    if (res.ok) {
+      // Refresh local list
+      const updatedRes = await fetch('/api/admin/hubs');
+      const updatedData = await updatedRes.json();
+      setHubs(updatedData);
+      closePanel();
     }
-    closePanel();
   };
 
-  const deleteHub = (id: string) => {
-    if (confirm("Decommission this hub? This action is irreversible.")) {
+  // --- 3. PERSISTENT DELETE ---
+  const deleteHub = async (id: string) => {
+    if (!confirm("Decommission this hub?")) return;
+
+    const res = await fetch(`/api/hubs/${id}`, { method: 'DELETE' });
+    if (res.ok) {
       const filtered = hubs.filter(h => h.id !== id);
       setHubs(filtered);
-      if (selectedHub.id === id) setSelectedHub(filtered[0]);
+      if (selectedHub?.id === id) setSelectedHub(filtered[0] || null);
     }
   };
+
+  if (isLoading) return <div className="p-20 text-center font-black animate-pulse">SYNCHRONIZING GRID...</div>;
+
+  // --- CRUD OPERATIONS ---
+  // const handleSaveHub = (e: React.FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault();
+  //   const formData = new FormData(e.currentTarget);
+    
+  //   const hubData: Hub = {
+  //     id: editingHub?.id || `HB-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+  //     name: formData.get("name") as string,
+  //     load: Number(formData.get("load")),
+  //     status: formData.get("status") as Hub["status"],
+  //     coords: editingHub?.coords || { x: `${Math.random() * 80 + 10}%`, y: `${Math.random() * 80 + 10}%` },
+  //     location: {
+  //       country: formData.get("country") as string,
+  //       city: formData.get("city") as string,
+  //       neighborhood: formData.get("neighborhood") as string,
+  //       phase: formData.get("phase") as string,
+  //     }
+  //   };
+
+  //   if (editingHub) {
+  //     setHubs(hubs.map(h => h.id === editingHub.id ? hubData : h));
+  //     setSelectedHub(hubData);
+  //   } else {
+  //     setHubs([...hubs, hubData]);
+  //   }
+  //   closePanel();
+  // };
+
+  // const deleteHub = (id: string) => {
+  //   if (confirm("Decommission this hub? This action is irreversible.")) {
+  //     const filtered = hubs.filter(h => h.id !== id);
+  //     setHubs(filtered);
+  //     if (selectedHub.id === id) setSelectedHub(filtered[0]);
+  //   }
+  // };
 
   const openPanel = (hub?: Hub) => {
     setEditingHub(hub || null);

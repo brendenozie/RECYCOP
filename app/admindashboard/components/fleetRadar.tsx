@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   TruckIcon, 
@@ -67,41 +67,75 @@ export function Logistics() {
   const activeUnits = vehicles.filter(v => v.status === "In Transit").length;
   const avgHealth = Math.round(vehicles.reduce((sum, v) => sum + v.healthScore, 0) / vehicles.length);
 
-  const handleSaveVehicle = (e: React.FormEvent<HTMLFormElement>) => {
+  const [loading, setLoading] = useState(true);
+
+  // --- 1. FETCH FLEET DATA ---
+  const fetchFleet = async () => {
+    setLoading(true);
+    try {
+      // This pulls from the /api/admin/fleet endpoint we created
+      const res = await fetch('/api/admin/fleet'); 
+      const data = await res.json();
+      setVehicles(data);
+    } catch (error) {
+      console.error("Fleet sync failed", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFleet();
+  }, []);
+
+  // --- 2. PERSISTENT PROVISIONING ---
+  const handleSaveVehicle = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
-    const vehicleData: Vehicle = {
-      id: editingVehicle?.id || `FL-${Math.floor(100 + Math.random() * 900)}`,
-      plate: formData.get("plate") as string,
-      makeModel: formData.get("makeModel") as string,
+    const payload = {
+      plate: formData.get("plate"),
+      makeModel: formData.get("makeModel"),
       driver: {
-        name: formData.get("driverName") as string,
-        id: formData.get("driverId") as string,
-        phone: formData.get("driverPhone") as string,
+        name: formData.get("driverName"),
+        id: formData.get("driverId"),
+        phone: formData.get("driverPhone"),
       },
-      assignedHub: formData.get("hub") as string,
-      cargoType: formData.get("cargo") as string,
-      status: formData.get("status") as VehicleStatus,
-      progress: editingVehicle?.progress || 0,
-      eta: formData.get("status") === "In Transit" ? "Calculating..." : "N/A",
-      healthScore: editingVehicle?.healthScore || 100,
+      assignedHub: formData.get("hub"),
+      cargoType: formData.get("cargo"),
+      status: editingVehicle ? editingVehicle.status : "Idle", 
     };
 
-    if (editingVehicle) {
-      setVehicles(vehicles.map(v => v.id === editingVehicle.id ? vehicleData : v));
-    } else {
-      setVehicles([...vehicles, vehicleData]);
+    try {
+      const method = editingVehicle ? "PATCH" : "POST";
+      const res = await fetch('/api/admin/fleet', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingVehicle ? { ...payload, id: editingVehicle.id } : payload)
+      });
+
+      if (res.ok) {
+        fetchFleet(); // Refresh list from DB
+        closePanel();
+      }
+    } catch (error) {
+      alert("Failed to provision asset.");
     }
-    closePanel();
   };
 
-  const deleteVehicle = (id: string) => {
-    if (confirm("Decommission this vehicle and unassign driver?")) {
-      setVehicles(vehicles.filter(v => v.id !== id));
+  // --- 3. DECOMMISSION (DELETE) ---
+  const deleteVehicle = async (id: string) => {
+    if (!confirm("Remove this asset from the corridor registry?")) return;
+
+    try {
+      const res = await fetch(`/api/admin/fleet?id=${id}`, { method: 'DELETE' });
+      if (res.ok) fetchFleet();
+    } catch (error) {
+      console.error("Delete failed");
     }
   };
 
+ 
   const openPanel = (vehicle?: Vehicle) => {
     setEditingVehicle(vehicle || null);
     setIsPanelOpen(true);
@@ -111,6 +145,23 @@ export function Logistics() {
     setIsPanelOpen(false);
     setEditingVehicle(null);
   };
+
+  // Inside your Logistics component
+  useEffect(() => {
+    // 1. Initial fetch
+    fetchFleet();
+
+    // 2. Set up a "Heartbeat" every 10 seconds
+    const heartbeat = setInterval(async () => {
+      // Trigger the simulator (In production, this happens on the server)
+      await fetch('/api/admin/telemetry', { method: 'POST' });
+      
+      // Refresh the UI with the new positions
+      fetchFleet();
+    }, 10000);
+
+    return () => clearInterval(heartbeat);
+  }, []);
 
   return (
     <div className="space-y-10 relative">
@@ -252,10 +303,24 @@ export function Logistics() {
               {/* Progress & Actions */}
               <div className="w-full md:w-64 space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className={cn(
+                  {/* <span className={cn(
                     "text-[9px] font-black uppercase px-2 py-1 rounded-md",
                     v.status === "In Transit" ? "bg-emerald-500/10 text-emerald-500" : "bg-slate-500/10 text-slate-500"
-                  )}>{v.status}</span>
+                  )}>{v.status}</span> */}
+                  <span className={cn(
+                  "text-[9px] font-black uppercase px-2 py-1 rounded-md flex items-center gap-1.5",
+                  v.status === "In Transit" 
+                    ? "bg-emerald-500/10 text-emerald-500" 
+                    : "bg-slate-500/10 text-slate-500"
+                )}>
+                  {v.status === "In Transit" && (
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                  )}
+                  {v.status}
+                </span>
                   <div className="flex gap-2">
                     <button onClick={() => openPanel(v)} className="p-2 hover:text-emerald-500 transition-colors"><PencilSquareIcon className="w-5 h-5"/></button>
                     <button onClick={() => deleteVehicle(v.id)} className="p-2 hover:text-red-500 transition-colors"><TrashIcon className="w-5 h-5"/></button>
@@ -268,10 +333,19 @@ export function Logistics() {
                       <span className="text-slate-400">ETA: {v.eta}</span>
                       <span className="text-emerald-500">{v.progress}%</span>
                     </div>
-                    <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                    {/* <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                       <motion.div initial={{ width: 0 }} animate={{ width: `${v.progress}%` }} className="h-full bg-emerald-500" />
+                    </div> */}
+                    <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={false} // Don't animate on first load
+                        animate={{ width: `${v.progress}%` }} 
+                        transition={{ duration: 1.5, ease: "easeInOut" }} // Smooth 1.5s sliding effect
+                        className="h-full bg-emerald-500" 
+                      />
                     </div>
                   </div>
+                  
                 ) : (
                   <div className="h-10 flex items-center justify-center border border-dashed border-slate-200 dark:border-white/10 rounded-xl">
                     <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Telemetry on Standby</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArchiveBoxIcon, 
@@ -45,6 +45,15 @@ export function Inventory() {
   const [editingItem, setEditingItem] = useState<Material | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  useEffect(() => {
+    const syncData = async () => {
+      const response = await fetch('/api/admin/inventory');
+      const data = await response.json();
+      setItems(data);
+    };
+    syncData();
+  }, []);
+
   // --- HELPER: COMPUTE STATUS ---
   const getStatus = (item: Material) => {
     const weightValue = parseFloat(item.weight.replace(/[^\d.-]/g, ''));
@@ -72,7 +81,7 @@ export function Inventory() {
     };
   };
 
-  const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const newItem: Material = {
@@ -84,12 +93,26 @@ export function Inventory() {
       driver: formData.get("driver") as string,
     };
 
-    if (editingItem) {
-      setItems(items.map(i => i.id === editingItem.id ? newItem : i));
-    } else {
-      setItems([newItem, ...items]);
+    const method = editingItem ? "PATCH" : "POST";
+    const url = editingItem ? `/api/admin/inventory/${editingItem.id}` : "/api/admin/inventory";
+
+    const response = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newItem),
+    });
+
+    if (response.ok) {
+      // Refresh local state or re-fetch
+      closePanel();
     }
-    closePanel();
+
+    // if (editingItem) {
+    //   setItems(items.map(i => i.id === editingItem.id ? newItem : i));
+    // } else {
+    //   setItems([newItem, ...items]);
+    // }
+    // closePanel();
   };
 
   const deleteItem = (id: string) => {

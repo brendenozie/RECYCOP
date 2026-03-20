@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   MapIcon, 
@@ -60,6 +60,23 @@ export function RouteManager() {
     }
   ]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  // Inside your RouteManager Component
+  const [availableVehicles, setAvailableVehicles] = useState([]);
+  const [availableDrivers, setAvailableDrivers] = useState([]);
+  const [isDeploying, setIsDeploying] = useState(false);
+
+  useEffect(() => {
+    // Load assets when the panel opens
+    const loadFleet = async () => {
+      const [vRes, dRes] = await Promise.all([
+        fetch('/api/admin/fleet?status=Available'),
+        fetch('/api/admin/drivers')
+      ]);
+      setAvailableVehicles(await vRes.json());
+      setAvailableDrivers(await dRes.json());
+    };
+    loadFleet();
+  }, [isPanelOpen]);
   
   // Form State for new Route
   const [newRoute, setNewRoute] = useState<Partial<RouteManifest>>({
@@ -72,13 +89,56 @@ export function RouteManager() {
     setNewRoute({ ...newRoute, checkpoints: [...(newRoute.checkpoints || []), cp] });
   };
 
-  const handleSave = () => {
-    const finalRoute = {
-      ...newRoute,
-      id: `RT-${Math.floor(1000 + Math.random() * 9000)}`,
-    } as RouteManifest;
-    setRoutes([...routes, finalRoute]);
-    setIsPanelOpen(false);
+  const handleClearCheckpoint = async (manifestId: string, checkpointId: string) => {
+    const res = await fetch('/api/driver/checkpoint', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ manifestId, checkpointId })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.isRouteComplete) {
+        alert("Manifest fully cleared. Returning to Hub.");
+      }
+      // Refresh the local route state to show the emerald CheckCircleIcon
+      // refreshRoutes();
+    }
+  };
+
+  // const handleSave = () => {
+  //   const finalRoute = {
+  //     ...newRoute,
+  //     id: `RT-${Math.floor(1000 + Math.random() * 9000)}`,
+  //   } as RouteManifest;
+  //   setRoutes([...routes, finalRoute]);
+  //   setIsPanelOpen(false);
+  // };
+
+  // 2. Update the handleSave to talk to your MongoDB API
+  const handleSave = async () => {
+    try {
+      const res = await fetch('/api/admin/manifests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRoute)
+      });
+
+      if (res.ok) {
+        // Refresh the list from the DB to ensure we have the real Mongo IDs
+        const updatedRes = await fetch('/api/admin/manifests');
+        const data = await updatedRes.json();
+        setRoutes(data);
+        setIsPanelOpen(false);
+        // Reset form
+        setNewRoute({
+          inventory: [{ type: "PET Plastic", weight: "20", unit: "Tons" }],
+          checkpoints: [{ id: "1", name: "Departure Point", status: "Cleared" }]
+        });
+      }
+    } catch (error) {
+      console.error("Deployment Error:", error);
+    }
   };
 
   return (
@@ -101,10 +161,35 @@ export function RouteManager() {
                     <label className="text-[10px] font-black uppercase text-slate-400">Route Title</label>
                     <input onChange={(e) => setNewRoute({...newRoute, title: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10 font-bold" placeholder="e.g. Northern Corridor A1" />
                   </div>
+
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-slate-400">Vehicle Plate</label>
-                    <input onChange={(e) => setNewRoute({...newRoute, vehiclePlate: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10 font-bold uppercase" placeholder="KDK 442Z" />
+                    <select 
+                      onChange={(e) => setNewRoute({...newRoute, vehiclePlate: e.target.value})}
+                      className="w-full bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10 font-bold"
+                    >
+                      <option value="">Select Available Truck</option>
+                      {availableVehicles.map((v: any) => (
+                        <option key={v.plate} value={v.plate}>{v.plate} ({v.capacity})</option>
+                      ))}
+                    </select>
+                    {/* <input onChange={(e) => setNewRoute({...newRoute, vehiclePlate: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10 font-bold uppercase" placeholder="KDK 442Z" /> */}
                   </div>
+                  
+                  {/* // 1. Add a specific selector for Drivers in the Basic Assignment grid */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-slate-400">Assigned Driver</label>
+                    <select 
+                      onChange={(e) => setNewRoute({...newRoute, driverName: e.target.value})}
+                      className="w-full bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10 font-bold"
+                    >
+                      <option value="">Select Verified Driver</option>
+                      {availableDrivers.map((d: any) => (
+                        <option key={d._id} value={d.name}>{d.name} (License: {d.licenseNo})</option>
+                      ))}
+                    </select>
+                  </div>
+                  
                 </div>
 
                 {/* 2. Manifest Summary (Inventory) */}
@@ -152,9 +237,19 @@ export function RouteManager() {
                   </div>
                 </div>
 
-                <button onClick={handleSave} className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-500/20">
+                {/* <button onClick={handleSave} className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-500/20">
                   Deploy Route to Driver
-                </button>
+                </button> */}
+                <button 
+                    disabled={isDeploying}
+                    onClick={handleSave} 
+                    className={cn(
+                      "w-full py-5 rounded-2xl font-black uppercase transition-all",
+                      isDeploying ? "bg-slate-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl"
+                    )}
+                  >
+                    {isDeploying ? "Synchronizing with Grid..." : "Deploy Route to Driver"}
+                  </button>
               </div>
             </motion.div>
           </>
