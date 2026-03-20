@@ -18,7 +18,7 @@ const FAQS = [
   {
     category: "Logistics",
     question: "How does hardware shipping work across Africa?",
-    answer: "We partner with local logistics hubs in 15+ countries. Once enrolled in a hardware-lab, your kit is dispatched within 48 hours. Tracking is provided via your RecycOp dashboard.",
+    answer: "We partner with local logistics hubs in 15+ countries. Once enrolled in a hardware-lab, your kit is dispatched within 48 hours. Tracking is provided via your RecycWorks dashboard.",
     icon: Truck
   },
   {
@@ -30,7 +30,7 @@ const FAQS = [
   {
     category: "Infrastructure",
     question: "Do I need my own computer to access the labs?",
-    answer: "Yes, you'll need a laptop for basic coordination. For heavy processing and geospatial tasks, RecycOp provides cloud-compute credits so you don't need high-end local hardware.",
+    answer: "Yes, you'll need a laptop for basic coordination. For heavy processing and geospatial tasks, RecycWorks provides cloud-compute credits so you don't need high-end local hardware.",
     icon: Terminal
   },
   {

@@ -60,10 +60,10 @@ async function verifyDatabase() {
 
     // Check specific admin
     // console.log("\n" + "━".repeat(50));
-    // console.log("🔎 SEARCHING FOR admin@recycop.com:");
+    // console.log("🔎 SEARCHING FOR admin@RecycWorks.com:");
     // console.log("━".repeat(50));
     
-    const admin = await db.collection("admins").findOne({ email: "admin@recycop.com" });
+    const admin = await db.collection("admins").findOne({ email: "admin@RecycWorks.com" });
     if (admin) {
       // console.log("✅ Admin found!");
       // console.log(`Email: ${admin.email}`);

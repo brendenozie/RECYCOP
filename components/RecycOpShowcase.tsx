@@ -13,7 +13,7 @@ import {
   FingerPrintIcon
 } from "@heroicons/react/24/outline";
 
-export function RecycOpShowcase() {
+export function RecycWorksShowcase() {
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Subtle parallax for the dashboard mockup
@@ -52,7 +52,7 @@ export function RecycOpShowcase() {
               </h2>
               
               <p className="text-slate-500 dark:text-purple-100/60 text-lg font-light leading-relaxed max-w-md">
-                RecycOp is a logistics engine that coordinates thousands of collectors, 
+                RecycWorks is a logistics engine that coordinates thousands of collectors, 
                 validates material purity, and provides the transparency global buyers demand.
               </p>
             </div>
@@ -159,7 +159,7 @@ export function RecycOpShowcase() {
 
               {/* Decorative Corner Labels */}
               <div className="absolute top-10 right-10 text-[8px] font-mono text-slate-400 dark:text-white/20 uppercase tracking-[0.5em] rotate-90 origin-right">
-                RecycOp_v4.0.2
+                RecycWorks_v4.0.2
               </div>
             </motion.div>
           </div>

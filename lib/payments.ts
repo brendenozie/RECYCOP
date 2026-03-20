@@ -466,7 +466,7 @@ export async function initializePesapal(
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        "User-Agent": "recycop/1.0",
+        "User-Agent": "RecycWorks/1.0",
       },
       body: JSON.stringify(tokenRequest),
     });

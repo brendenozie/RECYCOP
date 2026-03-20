@@ -8,11 +8,9 @@ declare module "next-auth" {
       email: string;
       firstName: string;
       lastName: string;
-      subscriptionStatus: string;
-      subscriptionType: string;
-      subscriptionEndDate?: Date | string;
-      subscriptionStartDate?: Date | string;
-      freeTrialEndDate?: Date | string;
+      role: "admin" | "operations" | "supplier" | "driver";
+      hubId?: string | null; // The specific Kenya Hub they belong to
+      status: string;
       emailVerified?: boolean;
       createdAt?: Date | string;
     } & DefaultSession["user"];
@@ -22,8 +20,9 @@ declare module "next-auth" {
   interface User extends DefaultUser {
     firstName?: string;
     lastName?: string;
-    subscriptionStatus?: string;
-    subscriptionType?: string;
+    role?: string;
+    hubId?: string | null;
+    status?: string;
   }
 }
 
@@ -32,11 +31,8 @@ declare module "next-auth/jwt" {
     userId: string;
     firstName: string;
     lastName: string;
-    subscriptionStatus: string;
-    subscriptionType: string;
-    subscriptionEndDate?: Date | string;
-    subscriptionStartDate?: Date | string;
-    freeTrialEndDate?: Date | string;
+    role: "admin" | "operations" | "supplier" | "driver";
+    hubId?: string | null;
     emailVerified?: boolean;
     createdAt?: Date | string;
     appToken: string;

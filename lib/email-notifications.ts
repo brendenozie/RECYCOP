@@ -54,8 +54,8 @@ const getEmailTransporter = () => {
       pass,
     },
     tls: {
-      rejectUnauthorized: false // Accept self-signed certificates
-    }
+      rejectUnauthorized: false, // Accept self-signed certificates
+    },
   });
 };
 
@@ -66,8 +66,8 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
   try {
     const transporter = getEmailTransporter();
 
-    const fromName = process.env.SMTP_FROM_NAME || "recycop";
-    const fromEmail = process.env.SMTP_FROM_EMAIL || "noreply@recycop.com";
+    const fromName = process.env.SMTP_FROM_NAME || "RecycWorks";
+    const fromEmail = process.env.SMTP_FROM_EMAIL || "noreply@RecycWorks.com";
 
     const mailOptions = {
       from: `${fromName} <${fromEmail}>`,
@@ -80,7 +80,10 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
     // console.log(`✅ Email sent (${options.type}) to ${options.to}:`, info.messageId);
     return true;
   } catch (error) {
-    console.error(`❌ Error sending email (${options.type}) to ${options.to}:`, error);
+    console.error(
+      `❌ Error sending email (${options.type}) to ${options.to}:`,
+      error,
+    );
     return false;
   }
 };
@@ -91,7 +94,7 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
 export const sendAdminPasswordResetEmail = async (
   email: string,
   resetToken: string,
-  adminName: string
+  adminName: string,
 ): Promise<boolean> => {
   const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/admin/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
@@ -147,7 +150,7 @@ export const sendAdminPasswordResetEmail = async (
           
           <div class="footer">
             <p>
-              © 2025 recycop. All rights reserved.<br>
+              © 2025 RecycWorks. All rights reserved.<br>
               This is an automated message, please do not reply to this email.
             </p>
           </div>
@@ -171,7 +174,7 @@ export const sendAdminPasswordResetEmail = async (
 export const sendUserPasswordResetEmail = async (
   email: string,
   resetToken: string,
-  userName: string
+  userName: string,
 ): Promise<boolean> => {
   const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
@@ -219,7 +222,7 @@ export const sendUserPasswordResetEmail = async (
           
           <div class="footer">
             <p>
-              © 2025 recycop. All rights reserved.<br>
+              © 2025 RecycWorks. All rights reserved.<br>
               This is an automated message, please do not reply to this email.
             </p>
           </div>
@@ -244,7 +247,7 @@ export const sendAdminWelcomeEmail = async (
   email: string,
   adminName: string,
   tempPassword: string,
-  role: string
+  role: string,
 ): Promise<boolean> => {
   const loginLink = `${process.env.NEXT_PUBLIC_APP_URL}/admin/login`;
 
@@ -266,12 +269,12 @@ export const sendAdminWelcomeEmail = async (
     <body>
       <div class="container">
         <div class="header">
-          <h1>👋 Welcome to recycop Admin</h1>
+          <h1>👋 Welcome to RecycWorks Admin</h1>
         </div>
         <div class="content">
           <p>Hi <strong>${adminName}</strong>,</p>
           
-          <p>Your admin account has been successfully created! You now have access to the recycop admin dashboard.</p>
+          <p>Your admin account has been successfully created! You now have access to the RecycWorks admin dashboard.</p>
           
           <p><strong>Account Role:</strong> ${role.toUpperCase()}</p>
           
@@ -311,7 +314,7 @@ export const sendAdminWelcomeEmail = async (
           
           <div class="footer">
             <p>
-              © 2025 recycop. All rights reserved.<br>
+              © 2025 RecycWorks. All rights reserved.<br>
               This is an automated message, please do not reply to this email.
             </p>
           </div>
@@ -323,7 +326,7 @@ export const sendAdminWelcomeEmail = async (
 
   return sendEmail({
     to: email,
-    subject: `👋 Welcome to recycop Admin - Your Account is Ready`,
+    subject: `👋 Welcome to RecycWorks Admin - Your Account is Ready`,
     html,
     type: EmailType.ADMIN_WELCOME,
   });
@@ -337,7 +340,7 @@ export const sendSubscriptionRenewedEmail = async (
   userName: string,
   planName: string,
   renewalDate: Date,
-  expiryDate: Date
+  expiryDate: Date,
 ): Promise<boolean> => {
   const html = `
     <!DOCTYPE html>
@@ -383,7 +386,7 @@ export const sendSubscriptionRenewedEmail = async (
           
           <div class="footer">
             <p>
-              © 2025 recycop. All rights reserved.<br>
+              © 2025 RecycWorks. All rights reserved.<br>
               This is an automated message, please do not reply to this email.
             </p>
           </div>
@@ -395,7 +398,7 @@ export const sendSubscriptionRenewedEmail = async (
 
   return sendEmail({
     to: email,
-    subject: `✅ Your recycop Subscription Renewed - ${planName}`,
+    subject: `✅ Your RecycWorks Subscription Renewed - ${planName}`,
     html,
     type: EmailType.SUBSCRIPTION_RENEWED,
   });
@@ -409,7 +412,7 @@ export const sendSubscriptionExpiringEmail = async (
   userName: string,
   planName: string,
   expiryDate: Date,
-  daysRemaining: number
+  daysRemaining: number,
 ): Promise<boolean> => {
   const renewLink = `${process.env.NEXT_PUBLIC_APP_URL}/subscription`;
 
@@ -458,7 +461,7 @@ export const sendSubscriptionExpiringEmail = async (
           
           <div class="footer">
             <p>
-              © 2025 recycop. All rights reserved.<br>
+              © 2025 RecycWorks. All rights reserved.<br>
               This is an automated message, please do not reply to this email.
             </p>
           </div>
@@ -470,7 +473,7 @@ export const sendSubscriptionExpiringEmail = async (
 
   return sendEmail({
     to: email,
-    subject: `⏰ Your recycop Subscription Expires in ${daysRemaining} Days`,
+    subject: `⏰ Your RecycWorks Subscription Expires in ${daysRemaining} Days`,
     html,
     type: EmailType.SUBSCRIPTION_EXPIRING,
   });
@@ -484,7 +487,7 @@ export const sendNewToolAnnouncementEmail = async (
   userName: string,
   toolName: string,
   toolDescription: string,
-  planName: string
+  planName: string,
 ): Promise<boolean> => {
   const dashboardLink = `${process.env.NEXT_PUBLIC_APP_URL}/tools`;
 
@@ -517,7 +520,7 @@ export const sendNewToolAnnouncementEmail = async (
             <p>${toolDescription}</p>
           </div>
           
-          <p>This tool is now available for you to use in the recycop dashboard. Check it out and start using it right away!</p>
+          <p>This tool is now available for you to use in the RecycWorks dashboard. Check it out and start using it right away!</p>
           
           <center>
             <a href="${dashboardLink}" class="button">View All Tools</a>
@@ -529,7 +532,7 @@ export const sendNewToolAnnouncementEmail = async (
           
           <div class="footer">
             <p>
-              © 2025 recycop. All rights reserved.<br>
+              © 2025 RecycWorks. All rights reserved.<br>
               This is an automated message, please do not reply to this email.
             </p>
           </div>
@@ -556,7 +559,7 @@ export const sendPaymentSuccessEmail = async (
   planName: string,
   amount: number,
   transactionId: string,
-  paymentDate: Date
+  paymentDate: Date,
 ): Promise<boolean> => {
   const html = `
     <!DOCTYPE html>
@@ -598,7 +601,7 @@ export const sendPaymentSuccessEmail = async (
           
           <div class="footer">
             <p>
-              © 2025 recycop. All rights reserved.<br>
+              © 2025 RecycWorks. All rights reserved.<br>
               This is an automated message, please do not reply to this email.
             </p>
           </div>
@@ -624,7 +627,7 @@ export const sendPaymentFailedEmail = async (
   userName: string,
   planName: string,
   amount: number,
-  reason: string
+  reason: string,
 ): Promise<boolean> => {
   const retryLink = `${process.env.NEXT_PUBLIC_APP_URL}/subscription`;
 
@@ -670,12 +673,12 @@ export const sendPaymentFailedEmail = async (
           </center>
           
           <p style="color: #666; margin-top: 30px;">
-            Need help? Contact our support team at support@recycop.com
+            Need help? Contact our support team at support@RecycWorks.com
           </p>
           
           <div class="footer">
             <p>
-              © 2025 recycop. All rights reserved.<br>
+              © 2025 RecycWorks. All rights reserved.<br>
               This is an automated message, please do not reply to this email.
             </p>
           </div>
@@ -700,7 +703,7 @@ export const sendAnnouncementEmail = async (
   email: string,
   recipientName: string,
   subject: string,
-  content: string
+  content: string,
 ): Promise<boolean> => {
   const html = `
     <!DOCTYPE html>
@@ -717,7 +720,7 @@ export const sendAnnouncementEmail = async (
     <body>
       <div class="container">
         <div class="header">
-          <h1>📢 recycop Announcement</h1>
+          <h1>📢 RecycWorks Announcement</h1>
         </div>
         <div class="content">
           <p>Hi <strong>${recipientName}</strong>,</p>
@@ -728,7 +731,7 @@ export const sendAnnouncementEmail = async (
           
           <div class="footer">
             <p>
-              © 2025 recycop. All rights reserved.<br>
+              © 2025 RecycWorks. All rights reserved.<br>
               This is an automated message, please do not reply to this email.
             </p>
           </div>

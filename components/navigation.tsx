@@ -11,25 +11,41 @@ import {
   BoltIcon, 
   GlobeAltIcon, 
   Squares2X2Icon,
-  UserIcon
+  UserIcon,
+  ArrowRightOnRectangleIcon,
+  ArrowRightIcon
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
+import { useAuth } from "./auth-context";
 
 const NAV_LINKS = [
   { name: "The Model", href: "#insight", icon: CircleStackIcon },
   { name: "Materials", href: "#materials", icon: Squares2X2Icon },
-  { name: "RecycOp", href: "#recycop", icon: BoltIcon },
+  { name: "RecycWorks", href: "#RecycWorks", icon: BoltIcon },
   { name: "Impact", href: "#impact", icon: GlobeAltIcon },
 ];
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, loading: authLoading, logout } = useAuth();
 
   const navigate = (url: string) => {
     setMobileMenuOpen(false);
     window.location.href = url;
   }
+
+  // Helper to determine the correct dashboard based on RecycOp Role
+  const getDashboardUrl = () => {
+    if (!user) return "/login";
+    switch (user.role) {
+      case "admin": return "/admin/stats";
+      case "driver": return "/mobile/transit";
+      case "operations": return "/ops/verification";
+      case "supplier": return "/coop/ledger";
+      default: return "/dashboard";
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -54,12 +70,12 @@ export function Navbar() {
       )}>
         
         {/* --- LOGO --- */}
-        <div className="flex items-center gap-3 cursor-pointer group">
+        <div onClick={() => navigate("/")} className="flex items-center gap-3 cursor-pointer group">
           <div className="p-2 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg shadow-emerald-500/20">
             <CpuChipIcon className="w-5 h-5" />
           </div>
           <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-white uppercase italic font-serif">
-            RECYC<span className="text-emerald-600 dark:text-emerald-400 not-italic font-sans">OP</span>
+            RECYC<span className="text-emerald-600 dark:text-emerald-400 not-italic font-sans">WORKS</span>
           </span>
         </div>
 
@@ -77,19 +93,39 @@ export function Navbar() {
           ))}
         </div>
 
-        {/* --- ACTION BUTTONS --- */}
+        {/* --- DYNAMIC ACTION BUTTONS --- */}
         <div className="hidden lg:flex items-center gap-3">
-          <button
-          onClick={() => navigate("/admindashboard")}
-          className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-purple-100/80 px-4 py-2 hover:text-emerald-600 dark:hover:text-white transition-all">
-            <UserIcon className="w-4 h-4" />
-            Admin Portal
-          </button>
-          <button 
-          onClick={() => navigate("/partnerdashboard")}
-          className="bg-slate-900 dark:bg-emerald-500 text-white dark:text-black px-7 py-3 rounded-2xl font-bold text-[11px] uppercase tracking-widest hover:scale-[1.03] active:scale-95 transition-all shadow-lg dark:shadow-emerald-500/20">
-            Partner Portal
-          </button>
+          {authLoading ? (
+            <div className="h-10 w-24 animate-pulse bg-slate-200 dark:bg-white/10 rounded-2xl" />
+          ) : user ? (
+            <>
+              <button
+                onClick={() => navigate(getDashboardUrl())}
+                className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-purple-100/80 px-4 py-2 hover:text-emerald-600 dark:hover:text-white transition-all">
+                <UserIcon className="w-4 h-4" />
+                {user.firstName}&apos;s Portal
+              </button>
+              <button 
+                onClick={logout}
+                className="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-red-400 p-3 rounded-2xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-all">
+                <ArrowRightOnRectangleIcon className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => navigate("/login")}
+                className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-purple-100/80 px-4 py-2 hover:text-emerald-600 dark:hover:text-white transition-all">
+                Sign In
+              </button>
+              <button 
+                onClick={() => navigate("/register")}
+                className="bg-slate-900 dark:bg-emerald-500 text-white dark:text-black px-7 py-3 rounded-2xl font-bold text-[11px] uppercase tracking-widest hover:scale-[1.03] active:scale-95 transition-all shadow-lg dark:shadow-emerald-500/20 flex items-center gap-2">
+                Join the Model
+                <ArrowRightIcon className="w-3 h-3" />
+              </button>
+            </>
+          )}
         </div>
 
         {/* --- MOBILE TOGGLE --- */}
@@ -122,7 +158,7 @@ export function Navbar() {
             >
               <div className="flex flex-col h-full">
                 <div className="flex items-center justify-between mb-12">
-                  <span className="font-serif italic text-2xl dark:text-emerald-400">Menu</span>
+                  <span className="font-serif italic text-2xl dark:text-emerald-400">RecycOp</span>
                   <button 
                     onClick={() => setMobileMenuOpen(false)}
                     className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-900 dark:text-purple-200"
@@ -152,16 +188,33 @@ export function Navbar() {
                 </div>
 
                 <div className="space-y-4 pt-8 border-t border-slate-200 dark:border-white/10">
-                   <button
-                    onClick={() => navigate("/partnerdashboard")}  
-                    className="w-full h-14 rounded-2xl border border-slate-200 dark:border-white/20 text-slate-900 dark:text-white font-black uppercase tracking-widest text-[10px]">
-                      Partner Login
-                   </button>
-                   <button 
-                    onClick={() => navigate("/admindashboard")}
-                    className="w-full h-14 rounded-2xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-500/20">
-                      Admin Login
-                   </button>
+                   {user ? (
+                     <>
+                        <button
+                          onClick={() => navigate(getDashboardUrl())} 
+                          className="w-full h-14 rounded-2xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-500/20">
+                          My Portal
+                        </button>
+                        <button 
+                          onClick={logout}
+                          className="w-full py-4 text-center text-red-500 font-bold text-[10px] uppercase tracking-widest">
+                          Logout Account
+                        </button>
+                     </>
+                   ) : (
+                     <>
+                        <button
+                          onClick={() => navigate("/login")}  
+                          className="w-full h-14 rounded-2xl border border-slate-200 dark:border-white/20 text-slate-900 dark:text-white font-black uppercase tracking-widest text-[10px]">
+                          Sign In
+                        </button>
+                        <button 
+                          onClick={() => navigate("/register")}
+                          className="w-full h-14 rounded-2xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-500/20">
+                          Join the Model
+                        </button>
+                     </>
+                   )}
                 </div>
               </div>
             </motion.div>

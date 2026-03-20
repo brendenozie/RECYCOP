@@ -10,13 +10,13 @@ const uri = process.env.MONGODB_URI;
 
 const options = {
   maxPoolSize: 10,
-  serverSelectionTimeoutMS: 30000,  // 30 seconds for initial connection
-  socketTimeoutMS: 60000,           // 60 seconds for socket operations
-  connectTimeoutMS: 30000,          // 30 seconds for connection timeout
+  serverSelectionTimeoutMS: 30000, // 30 seconds for initial connection
+  socketTimeoutMS: 60000, // 60 seconds for socket operations
+  connectTimeoutMS: 30000, // 30 seconds for connection timeout
   retryWrites: true,
   retryReads: true,
-  minPoolSize: 2,                   // Maintain minimum connections
-  maxIdleTimeMS: 60000,             // Close idle connections after 60s
+  minPoolSize: 2, // Maintain minimum connections
+  maxIdleTimeMS: 60000, // Close idle connections after 60s
 };
 
 let client: MongoClient;
@@ -43,32 +43,32 @@ export async function getDatabase(): Promise<Db> {
   try {
     const client = await clientPromise;
 
-    const dbName = process.env.MONGODB_DB_NAME || "recycop";
-    
+    const dbName = process.env.MONGODB_DB_NAME || "RecycWorks";
+
     // console.log('[MongoDB] Successfully connected to database:', dbName);
     return client.db(dbName);
   } catch (error: any) {
-    console.error('[MongoDB] Connection error:', error.message);
-    console.error('[MongoDB] Error code:', error.code);
-    
+    console.error("[MongoDB] Connection error:", error.message);
+    console.error("[MongoDB] Error code:", error.code);
+
     // If connection fails, try to reconnect
-    if (error.name === 'MongoServerSelectionError') {
+    if (error.name === "MongoServerSelectionError") {
       // console.log('[MongoDB] Retrying connection...');
       try {
         // Create new client and retry
         const newClient = new MongoClient(uri, options);
         const connectedClient = await newClient.connect();
 
-        const dbName = process.env.MONGODB_DB_NAME || "recycop";
-        
+        const dbName = process.env.MONGODB_DB_NAME || "RecycWorks";
+
         // console.log('[MongoDB] Reconnected successfully to:', dbName);
         return connectedClient.db(dbName);
       } catch (retryError: any) {
-        console.error('[MongoDB] Retry failed:', retryError.message);
+        console.error("[MongoDB] Retry failed:", retryError.message);
         throw retryError;
       }
     }
-    
+
     throw error;
   }
 }

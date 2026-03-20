@@ -10,8 +10,8 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: "RecycOp | Circular Economy Infrastructure",
-    template: "%s | RecycOp",
+    default: "RecycWorks | Circular Economy Infrastructure",
+    template: "%s | RecycWorks",
   },
   description:
     "Formalizing Africa's recycling sector through digital intelligence and physical infrastructure. Aligning with Kenya Vision 2030 to turn waste into high-value industrial commodities.",
@@ -19,53 +19,53 @@ export const metadata: Metadata = {
     "Recycling Kenya",
     "Circular Economy Africa",
     "Waste Management Software",
-    "RecycOp Dashboard",
+    "RecycWorks Dashboard",
     "PET Recycling",
     "HDPE Supply Chain",
     "Sustainable Manufacturing",
     "Kenya Vision 2030 Green Economy",
     "Aggregator Cooperative",
   ],
-  authors: [{ name: "RecycOp Team" }],
-  creator: "RecycOp Africa",
-  publisher: "RecycOp Africa",
+  authors: [{ name: "RecycWorks Team" }],
+  creator: "RecycWorks Africa",
+  publisher: "RecycWorks Africa",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://recycop.com"),
+  metadataBase: new URL("https://RecycWorks.com"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://recycop.com",
-    title: "RecycOp | The Brain of the Recycling Value Chain",
+    url: "https://RecycWorks.com",
+    title: "RecycWorks | The Brain of the Recycling Value Chain",
     description:
       "Formalizing fragmented waste collection into a transparent, high-yield industrial supply chain.",
-    siteName: "RecycOp",
+    siteName: "RecycWorks",
     images: [
       {
-        url: "/recycop_og.png", // Recommended size: 1200x630
+        url: "/RecycWorks_og.png", // Recommended size: 1200x630
         width: 1200,
         height: 630,
-        alt: "RecycOp Digital Infrastructure",
+        alt: "RecycWorks Digital Infrastructure",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "RecycOp Africa",
+    title: "RecycWorks Africa",
     description: "Digital intelligence for the circular economy.",
-    images: ["/recycop_og.png"],
-    creator: "@recycop",
+    images: ["/RecycWorks_og.png"],
+    creator: "@RecycWorks",
   },
   icons: {
-    icon: "/recycop_ico.png",
-    shortcut: "/recycop_ico.png",
-    apple: "/recycop_ico.png",
+    icon: "/RecycWorks_ico.png",
+    shortcut: "/RecycWorks_ico.png",
+    apple: "/RecycWorks_ico.png",
   },
 };
 

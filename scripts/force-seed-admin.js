@@ -28,7 +28,7 @@ async function forceSeededAdmin() {
 
     // DELETE existing admin if it exists
     // console.log("🗑️  Deleting existing admin account...");
-    const deleteResult = await db.collection("admins").deleteMany({ email: "admin@recycop.com" });
+    const deleteResult = await db.collection("admins").deleteMany({ email: "admin@RecycWorks.com" });
     if (deleteResult.deletedCount > 0) {
       // console.log(`✅ Deleted ${deleteResult.deletedCount} existing admin(s)\n`);
     } else {
@@ -62,7 +62,7 @@ async function forceSeededAdmin() {
 
     // Create new super admin
     const superAdmin = {
-      email: "admin@recycop.com",
+      email: "admin@RecycWorks.com",
       password: hashedPassword,
       firstName: "GiF",
       lastName: "Tech",

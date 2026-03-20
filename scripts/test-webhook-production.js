@@ -59,7 +59,7 @@ async function testProductionWebhook() {
 
     // console.log('🔍 Test data:', JSON.stringify(testData, null, 2));
 
-    const response = await makeRequest('https://recycop.com/api/payments/pesapal-webhook', testData);
+    const response = await makeRequest('https://RecycWorks.com/api/payments/pesapal-webhook', testData);
 
     // console.log('🔍 Webhook response status:', response.status);
     // console.log('🔍 Webhook response data:', JSON.stringify(response.data, null, 2));

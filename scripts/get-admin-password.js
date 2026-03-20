@@ -24,7 +24,7 @@ async function resetAdminPassword() {
     client = new mongodb.MongoClient(mongoUri);
     await client.connect();
 
-    const db = client.db("recycop");
+    const db = client.db("RecycWorks");
 
     // Find super admin
     const superAdmin = await db

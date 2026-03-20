@@ -1,132 +1,150 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Navbar } from "@/components/navigation";
 import { Footer } from "@/components/footer";
+import { 
+  ShieldCheckIcon, 
+  LockClosedIcon, 
+  EyeIcon, 
+  UserGroupIcon, 
+  GlobeAmericasIcon,
+  DocumentTextIcon 
+} from "@heroicons/react/24/outline";
 
 export default function PrivacyPolicyPage() {
+  const sections = [
+    {
+      id: "collection",
+      title: "Data Intelligence Collection",
+      icon: EyeIcon,
+      content: "We collect operational data necessary to formalize the waste economy. This includes geolocation for collection routing, weight metrics for the 100-tonne ledger, and identity verification for secure payouts."
+    },
+    {
+      id: "usage",
+      title: "Operational Usage",
+      icon: GlobeAmericasIcon,
+      content: "Your data is used to optimize the 'Waste-to-Wealth' pipeline. AI models analyze collection patterns to reduce carbon footprints and predict infrastructure needs across Kenyan hubs."
+    },
+    {
+      id: "protection",
+      title: "Encryption & Sovereignty",
+      icon: LockClosedIcon,
+      content: "All phygital records are encrypted at the edge. We utilize distributed ledger technology to ensure that collection history is tamper-proof and belongs to the originating cooperative."
+    },
+    {
+      id: "sharing",
+      title: "Third-Party Protocol",
+      icon: UserGroupIcon,
+      content: "We do not sell operational intelligence. Data is only shared with verified partners (e.g., Pesapal for payouts) required to execute the RecycOp mission."
+    }
+  ];
+
   return (
-    <>
+    <div className="min-h-screen bg-[#0a0118] text-white">
       <Navbar />
-      <main className="min-h-screen bg-white dark:bg-black">
+
+      {/* Cinematic Background */}
+      <div className="absolute top-0 left-0 w-full h-[600px] bg-emerald-500/5 blur-[120px] rounded-full -translate-y-1/2 pointer-events-none" />
+
+      <main className="relative z-10 max-w-6xl mx-auto px-6 py-24">
         {/* Header */}
-        <section className="max-w-4xl mx-auto px-4 py-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-black dark:text-white mb-4">
-            Privacy Policy
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Last updated: October 2025
-          </p>
+        <section className="mb-20 text-center md:text-left">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <div className="inline-flex p-3 rounded-2xl bg-purple-500/10 text-purple-400 mb-6 border border-purple-500/20">
+              <ShieldCheckIcon className="w-8 h-8" />
+            </div>
+            <h1 className="text-4xl md:text-6xl font-serif italic mb-4">
+              Privacy <span className="text-emerald-400 font-sans font-black uppercase tracking-tighter not-italic">Protocol</span>
+            </h1>
+            <p className="text-purple-200/40 text-xs font-black uppercase tracking-[0.3em]">
+              Last Updated: March 2026 • Nairobi, Kenya
+            </p>
+          </motion.div>
         </section>
 
-        {/* Content */}
-        <section className="max-w-4xl mx-auto px-4 pb-16 text-gray-700 dark:text-gray-300 space-y-8">
-          <div>
-            <h2 className="text-2xl font-bold text-black dark:text-white mb-4">
-              1. Introduction
-            </h2>
-            <p>
-              GIFTECH(&quot;we&quot;, &quot;us&quot;, &quot;our&quot;, or
-              &quot;Company&quot;) operates the GIFTECHwebsite and mobile
-              application. This page informs you of our policies regarding the
-              collection, use, and disclosure of personal data when you use our
-              Service and the choices you have associated with that data.
-            </p>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          {/* Sticky Navigation for Desktop */}
+          <aside className="hidden lg:block lg:col-span-3 sticky top-32 h-fit">
+            <nav className="space-y-4">
+              {sections.map((s) => (
+                <a 
+                  key={s.id} 
+                  href={`#${s.id}`}
+                  className="block text-[10px] font-black uppercase tracking-widest text-purple-200/30 hover:text-emerald-400 transition-colors border-l border-white/5 pl-4 py-2 hover:border-emerald-500"
+                >
+                  {s.title}
+                </a>
+              ))}
+            </nav>
+          </aside>
 
-          <div>
-            <h2 className="text-2xl font-bold text-black dark:text-white mb-4">
-              2. Information Collection and Use
-            </h2>
-            <p className="mb-3">
-              We collect several different types of information for various
-              purposes to provide and improve our Service to you.
-            </p>
-            <h3 className="text-xl font-semibold text-black dark:text-white mb-2">
-              Types of Data Collected:
-            </h3>
-            <ul className="list-disc list-inside space-y-2">
-              <li>Personal Data (name, email address, phone number, etc.)</li>
-              <li>
-                Usage Data (IP address, browser type, pages visited, etc.)
-              </li>
-              <li>Financial Data (payment information, transaction history)</li>
-              <li>Cookies and similar tracking technologies</li>
-            </ul>
-          </div>
+          {/* Main Content */}
+          <div className="lg:col-span-9 space-y-12">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-12"
+            >
+              <div className="prose prose-invert prose-emerald max-w-none">
+                <p className="text-purple-200/60 leading-relaxed text-lg mb-12">
+                  At RecycOp, we believe that data privacy is a fundamental pillar of sustainable innovation. 
+                  As we bridge the gap between waste and wealth, we are committed to protecting the 
+                  digital identity of every supplier, driver, and innovator in our ecosystem.
+                </p>
 
-          <div>
-            <h2 className="text-2xl font-bold text-black dark:text-white mb-4">
-              3. Use of Data
-            </h2>
-            <p className="mb-3">
-              GIFTECHuses the collected data for various purposes:
-            </p>
-            <ul className="list-disc list-inside space-y-2">
-              <li>To provide and maintain our Service</li>
-              <li>To notify you about changes to our Service</li>
-              <li>
-                To allow you to participate in interactive features of our
-                Service
-              </li>
-              <li>To provide customer support</li>
-              <li>
-                To gather analysis or valuable information so we can improve our
-                Service
-              </li>
-              <li>To monitor the usage of our Service</li>
-              <li>To detect, prevent and address technical issues and fraud</li>
-            </ul>
-          </div>
+                <div className="space-y-16">
+                  {sections.map((section) => (
+                    <div key={section.id} id={section.id} className="scroll-mt-32">
+                      <div className="flex items-center gap-4 mb-4">
+                        <section.icon className="w-6 h-6 text-emerald-400" />
+                        <h2 className="text-xl font-bold tracking-tight text-white m-0">
+                          {section.title}
+                        </h2>
+                      </div>
+                      <p className="text-purple-200/50 leading-relaxed pl-10">
+                        {section.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-          <div>
-            <h2 className="text-2xl font-bold text-black dark:text-white mb-4">
-              4. Security of Data
-            </h2>
-            <p>
-              The security of your data is important to us, but remember that no
-              method of transmission over the Internet or method of electronic
-              storage is 100% secure. While we strive to use commercially
-              acceptable means to protect your Personal Data, we cannot
-              guarantee its absolute security.
-            </p>
-          </div>
+              {/* Compliance Footer Card */}
+              <div className="mt-20 p-8 rounded-[2rem] bg-emerald-500/5 border border-emerald-500/20 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <DocumentTextIcon className="w-10 h-10 text-emerald-400/50" />
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-widest">Regulatory Compliance</h4>
+                    <p className="text-[10px] text-purple-200/40">Aligned with Kenya Data Protection Act (2019) & GDPR</p>
+                  </div>
+                </div>
+                <button className="px-6 py-3 bg-emerald-500 text-[#0a0118] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-all">
+                  Download Full PDF
+                </button>
+              </div>
+            </motion.div>
 
-          <div>
-            <h2 className="text-2xl font-bold text-black dark:text-white mb-4">
-              5. Changes to This Privacy Policy
-            </h2>
-            <p>
-              We may update our Privacy Policy from time to time. We will notify
-              you of any changes by posting the new Privacy Policy on this page
-              and updating the &quot;Last updated&quot; date at the top of this
-              Privacy Policy.
-            </p>
+            {/* Contact Bridge */}
+            <div className="text-center py-12">
+              <p className="text-purple-200/30 text-xs font-bold mb-4 uppercase tracking-widest">
+                Questions regarding your digital sovereignty?
+              </p>
+              <a 
+                href="mailto:privacy@recycop.africa" 
+                className="text-emerald-400 hover:text-emerald-300 font-serif italic text-xl underline decoration-emerald-500/30 underline-offset-8"
+              >
+                privacy@recycop.africa
+              </a>
+            </div>
           </div>
-
-          <div>
-            <h2 className="text-2xl font-bold text-black dark:text-white mb-4">
-              6. Contact Us
-            </h2>
-            <p>
-              If you have any questions about this Privacy Policy, please
-              contact us at:
-            </p>
-            <ul className="list-disc list-inside space-y-2 mt-4">
-              <li>Email: briancreatives@gmail.com</li>
-              <li>WhatsApp: +254 728 747 441</li>
-            </ul>
-          </div>
-
-          <div className="bg-green-50 dark:bg-green-900 p-6 rounded-lg">
-            <p className="text-sm">
-              By using GIFTECH, you acknowledge that you have read this
-              Privacy Policy and agree to its terms. If you do not agree with
-              our privacy policies and practices, please do not use our Service.
-            </p>
-          </div>
-        </section>
+        </div>
       </main>
+
       <Footer />
-    </>
+    </div>
   );
 }

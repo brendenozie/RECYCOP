@@ -1,31 +1,30 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { getDatabase } from "./mongodb";
-
-// Add this to your existing auth/db file
 import { ObjectId } from "mongodb";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+const JWT_SECRET = process.env.JWT_SECRET || "RecycWorks-secure-key-2026";
 
-export type UserRole = "user" | "affiliate" | "partner" | "student" | "mentor" | "admin";
+// Roles aligned with the RecycWorks model
+export type UserRole = "admin" | "operations" | "supplier" | "driver";
 
-export interface AffiliateProfile {
-  referralCode: string;
-  commissionRate: number; // e.g. 0.1 = 10%
-  totalEarnings: number;
-  totalReferrals: number;
-  isActive: boolean;
+/** 📦 16-PRODUCT STREAM LEDGER (Replaces Affiliate Stats) */
+export interface SupplierLedger {
+  hubId: string;
+  totalWeightSupplied: number; // in kg
+  totalEarnings: number; // KES
+  activeBatches: number;
+  primaryMaterial: string; // e.g., "PET-A" or "HDPE"
 }
 
-export interface PartnerProfile {
-  companyName: string;
-  tier: "silver" | "gold" | "platinum";
-  revenueShare: number; // %
-  managedAffiliates: number;
-  totalRevenue: number;
-  isApproved: boolean;
+/** 🚚 FLEET & LOGISTICS PROFILE */
+export interface DriverProfile {
+  licenseNumber: string;
+  vehiclePlate: string;
+  assignedHubId: string;
+  verifiedLoads: number;
+  rating: number;
 }
-
 
 export interface User {
   _id?: string;
@@ -35,39 +34,28 @@ export interface User {
   lastName: string;
   phoneNumber?: string;
 
-    /** 🔑 ROLE */
+  /** 🔑 ROLE & SECURITY */
   role: UserRole;
-  isAdmin?: boolean;
+  isAdmin: boolean;
+  hubId?: string | null; // The Kenya CBC-aligned Hub they operate from
 
-  /** 🧩 PROFILES (OPTIONAL) */
-  affiliateProfile?: AffiliateProfile | null;
-  partnerProfile?: PartnerProfile | null;
-  /** 📦 SUBSCRIPTION DETAILS */
-  referralCode?: string;
-  refereer?: string; // referral code of the user who referred this user
-  tradingviewUsername?: string;
+  /** 🧩 OPERATIONAL PROFILES */
+  supplierProfile?: SupplierLedger | null;
+  driverProfile?: DriverProfile | null;
 
-  subscriptionStatus: "active" | "inactive" | "expired";
-  subscriptionType: "free" | "basic" | "premium" | "pro" | null;
-  subscriptionEndDate?: Date;
-  subscriptionStartDate?: Date;
-  freeTrialEndDate?: Date; // 3-day free trial for new users
-  // Pending subscription (scheduled to activate after current expires)
-  pendingSubscription?: {
-    type: "basic" | "premium" | "pro";
-    planId: string;
-    planName: string;
-    duration: number; // days
-    scheduledStartDate: Date; // When current subscription ends
-  } | null;
+  /** 📈 PERFORMANCE TRACKING (Replaces Subscriptions) */
+  status: "active" | "suspended" | "pending_verification";
+  onboardingStep: number; // 1 to 4
+
   emailVerified?: boolean;
-  emailVerifiedAt?: Date;
-  provider?: "credentials" | "google";
+  provider: "credentials" | "google";
   googleId?: string;
   image?: string;
   createdAt: Date;
   updatedAt: Date;
 }
+
+/* --- UTILS --- */
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -75,19 +63,25 @@ export async function hashPassword(password: string): Promise<string> {
 
 export async function verifyPassword(
   password: string,
-  hashedPassword: string
+  hashedPassword: string,
 ): Promise<boolean> {
   return bcrypt.compare(password, hashedPassword);
 }
 
-export function generateToken(userId: string, email: string, role: string, isAdmin?: boolean ): string {
-  return jwt.sign({ userId, email, role, isAdmin }, JWT_SECRET, { expiresIn: "7d" });
+export function generateToken(
+  userId: string,
+  email: string,
+  role: string,
+  isAdmin: boolean,
+): string {
+  return jwt.sign({ userId, email, role, isAdmin }, JWT_SECRET, {
+    expiresIn: "7d",
+  });
 }
 
-// Update return type to include email
 export function verifyToken(
-  token: string
-): { userId: string; email: string; role: UserRole, isAdmin?: boolean } | null {
+  token: string,
+): { userId: string; email: string; role: UserRole; isAdmin: boolean } | null {
   try {
     return jwt.verify(token, JWT_SECRET) as any;
   } catch {
@@ -95,34 +89,35 @@ export function verifyToken(
   }
 }
 
+/* --- CORE FUNCTIONS --- */
+
 export async function createUser(
-  userData: Omit<User, "_id" | "createdAt" | "updatedAt">
+  userData: Omit<User, "_id" | "createdAt" | "updatedAt">,
 ): Promise<User> {
   const db = await getDatabase();
-  const hashedPassword = await hashPassword(userData.password!);
+  let hashedPassword = userData.password;
 
-  // Calculate 3-day free trial end date
-  const freeTrialEndDate = new Date();
-  freeTrialEndDate.setDate(freeTrialEndDate.getDate() + 3);
+  if (userData.provider === "credentials" && userData.password) {
+    hashedPassword = await hashPassword(userData.password);
+  }
 
-  const user = {
+  const user: User = {
     ...userData,
+    // _id: null,
     password: hashedPassword,
-
-    role: userData.role || "user",
-    isAdmin: userData.isAdmin || false,
-
-    affiliateProfile: null,
-    partnerProfile: null,
-
-    refereer: userData.refereer || undefined,
-    tradingviewUsername: userData.tradingviewUsername || undefined,
-
-    // Default to free plan for all new users with 3-day trial
-    subscriptionStatus: "active" as "active" | "inactive" | "expired",
-    subscriptionType: "free" as "free" | "basic" | "premium" | "pro" | null,
-    subscriptionEndDate: undefined,
-    freeTrialEndDate, // 3-day free trial
+    role: userData.role || "supplier",
+    isAdmin: userData.role === "admin",
+    status: userData.role === "driver" ? "pending_verification" : "active",
+    supplierProfile:
+      userData.role === "supplier"
+        ? {
+            hubId: userData.hubId || "GENERAL",
+            totalWeightSupplied: 0,
+            totalEarnings: 0,
+            activeBatches: 0,
+            primaryMaterial: "N/A",
+          }
+        : null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -143,204 +138,72 @@ export async function findUser(email: string): Promise<User | null> {
     firstName: user.firstName,
     lastName: user.lastName,
     phoneNumber: user.phoneNumber,
-    tradingviewUsername: user.tradingviewUsername,
-    referralCode: user.referralCode,
-
-    role: user.role || "user",
-    isAdmin: user.isAdmin || false,
-
-    affiliateProfile: user.affiliateProfile || null,
-    partnerProfile: user.partnerProfile || null,
-
-    subscriptionStatus: user.subscriptionStatus || "inactive",
-    subscriptionType: user.subscriptionType || null,
-    subscriptionEndDate: user.subscriptionEndDate,
-    freeTrialEndDate: user.freeTrialEndDate,
-    emailVerified: user.emailVerified || false,
-    emailVerifiedAt: user.emailVerifiedAt,
-    provider: user.provider || "credentials",
+    role: user.role || "supplier",
+    isAdmin: user.role === "admin" || !!user.isAdmin,
+    hubId: user.hubId,
+    supplierProfile: user.supplierProfile,
+    driverProfile: user.driverProfile,
+    status: user.status,
+    emailVerified: user.emailVerified,
+    provider: user.provider,
     googleId: user.googleId,
     image: user.image,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
+    onboardingStep: user.onboardingStep || 1,
   };
 }
 
+/**
+ * findUserById checks both collections and formats for the RecycWorks Dashboard
+ */
 export async function findUserById(id: string): Promise<User | null> {
   const db = await getDatabase();
-  const { ObjectId } = require("mongodb");
-  
-  // Check admins collection first
-  const admin = await db.collection("admins").findOne({ _id: new ObjectId(id) });
-  if (admin) {
-    return {
-      _id: admin._id.toString(),
-      email: admin.email,
-      password: admin.password,
-      firstName: admin.firstName,
-      lastName: admin.lastName,
-      phoneNumber: admin.phoneNumber,
-      tradingviewUsername: admin.tradingviewUsername,
-      referralCode: admin.referralCode,
-          
-      role: admin.role || "admin",
 
-      affiliateProfile: admin.affiliateProfile || null,
-      partnerProfile: admin.partnerProfile || null,
-
-      subscriptionStatus: "active" as any, // Admins always have active status
-      subscriptionType: null,
-      emailVerified: true,
-      provider: admin.provider || "credentials",
-      createdAt: admin.createdAt,
-      updatedAt: admin.updatedAt,
-      isAdmin: true,
-      
-      permissions: admin.permissions,
-    } as any;
-  }
-  
-  // Check users collection
   const user = await db.collection("users").findOne({ _id: new ObjectId(id) });
   if (!user) return null;
 
   return {
+    ...user,
     _id: user._id.toString(),
-    email: user.email,
-    password: user.password,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    phoneNumber: user.phoneNumber,
-    tradingviewUsername: user.tradingviewUsername,
-    referralCode: user.referralCode,
-
-    role: user.role || "user",
-    isAdmin: user.isAdmin || false,
-
-    affiliateProfile: user.affiliateProfile || null,
-    partnerProfile: user.partnerProfile || null,
-
-    subscriptionStatus: user.subscriptionStatus || "inactive",
-    subscriptionType: user.subscriptionType || null,
-    subscriptionEndDate: user.subscriptionEndDate,
-    freeTrialEndDate: user.freeTrialEndDate,
-    emailVerified: user.emailVerified || false,
-    emailVerifiedAt: user.emailVerifiedAt,
-    provider: user.provider || "credentials",
-    googleId: user.googleId,
-    image: user.image,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
-  };
+    role: user.role || "supplier",
+    isAdmin: user.role === "admin" || !!user.isAdmin,
+  } as User;
 }
 
-// export async function updateUserSubscription(
-//   userId: string,
-//   subscriptionData: {
-//     subscriptionStatus: "active" | "inactive" | "expired";
-//     subscriptionType: "basic" | "premium" | "pro";
-//     subscriptionEndDate: Date;
-//     subscriptionStartDate?: Date;
-//   }
-// ): Promise<void> {
-//   const db = await getDatabase();
-//   const { ObjectId } = require("mongodb");
-
-//   // When upgrading from free trial to paid, remove the freeTrialEndDate
-//   await db.collection("users").updateOne(
-//     { _id: new ObjectId(userId) },
-//     {
-//       $set: {
-//         ...subscriptionData,
-//         subscriptionStartDate: subscriptionData.subscriptionStartDate || new Date(),
-//         updatedAt: new Date(),
-//       },
-//       $unset: {
-//         freeTrialEndDate: "", // Remove free trial date when upgrading to paid
-//       },
-//     }
-//   );
-// }
-
-
-export async function updateUserSubscription(
-  userId: string,
-  subscriptionData: {
-    subscriptionStatus: "active" | "inactive" | "expired";
-    subscriptionType: "basic" | "premium" | "pro";
-    subscriptionEndDate: Date;
-    subscriptionStartDate?: Date;
-    paymentAmount?: number; // Pass the amount paid to calculate commission
-  }
-): Promise<void> {
+/**
+ * Replaces 'trackReferralCommission'.
+ * Tracks the "Wealth from Waste" flow when a load is verified.
+ */
+export async function processBatchCompletion(
+  supplierId: string,
+  batchData: { weight: number; rate: number; material: string },
+) {
   const db = await getDatabase();
+  const earning = batchData.weight * batchData.rate;
 
-  // 1. Fetch the user to check for a 'refereer' (referral code)
-  const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
-
-  // 2. Update the user's subscription status
+  // 1. Update Supplier's Ledger
   await db.collection("users").updateOne(
-    { _id: new ObjectId(userId) },
-    {
-      $set: {
-        ...subscriptionData,
-        subscriptionStartDate: subscriptionData.subscriptionStartDate || new Date(),
-        updatedAt: new Date(),
-      },
-      $unset: {
-        freeTrialEndDate: "", 
-      },
-    }
-  );
-
-  // 3. If the user was referred and this is a payment, create a referral record
-  if (user?.refereer && subscriptionData.paymentAmount) {
-    await trackReferralCommission(user.refereer, userId, subscriptionData.paymentAmount);
-  }
-}
-
-
-async function trackReferralCommission(referralCode: string, referredUserId: string, amount: number) {
-  const db = await getDatabase();
-
-  // 1. Find the partner/affiliate who owns this referral code
-  // We check partnerProfile first, then affiliateProfile
-  const partner = await db.collection("users").findOne({
-    $or: [
-      { "partnerProfile.referralCode": referralCode },
-      { "affiliateProfile.referralCode": referralCode }
-    ]
-  });
-
-  if (!partner) return;
-
-  // 2. Determine commission rate (defaulting to 20% if not set)
-  const commissionRate = partner.partnerProfile?.commissionRate || 
-                         partner.affiliateProfile?.commissionRate || 0.2;
-  
-  const partnerRevenue = amount * commissionRate;
-
-  // 3. Create the record for the "Recent Activity" list on the dashboard
-  await db.collection("referrals").insertOne({
-    partnerId: partner._id,          // Link to the partner's account
-    referredUserId: new ObjectId(referredUserId),
-    referralCode: referralCode,
-    saleAmount: amount,              // Total user paid (e.g., $49)
-    revenue: partnerRevenue,         // Partner's cut (e.g., $9.80)
-    date: new Date(),
-    createdAt: new Date()
-  });
-
-  // 4. Update the Partner's total stats for the dashboard counters
-  const profileKey = partner.role === "partner" ? "partnerProfile" : "affiliateProfile";
-  
-  await db.collection("users").updateOne(
-    { _id: partner._id },
+    { _id: new ObjectId(supplierId) },
     {
       $inc: {
-        [`${profileKey}.totalRevenue`]: partnerRevenue,
-        [`${profileKey}.totalReferrals`]: 1
-      }
-    }
+        "supplierProfile.totalWeightSupplied": batchData.weight,
+        "supplierProfile.totalEarnings": earning,
+        "supplierProfile.activeBatches": 1,
+      },
+      $set: {
+        "supplierProfile.primaryMaterial": batchData.material,
+        updatedAt: new Date(),
+      },
+    },
   );
+
+  // 2. Create the Dividend Record for the Dashboard
+  await db.collection("dividends").insertOne({
+    supplierId: new ObjectId(supplierId),
+    weight: batchData.weight,
+    amount: earning,
+    material: batchData.material,
+    timestamp: new Date(),
+  });
 }

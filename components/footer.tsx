@@ -31,10 +31,10 @@ export function Footer() {
           <div className="md:col-span-4 space-y-6">
             <div className="flex items-center space-x-2">
               <div className="h-8 w-8 bg-emerald-500 rounded-lg shadow-[0_0_15px_#10b981]" />
-              <span className="text-2xl font-serif tracking-tight font-bold">Recyc<span className="text-emerald-400">Op</span></span>
+              <span className="text-2xl font-serif tracking-tight font-bold text-white">Recyc<span className="text-emerald-400">Works</span></span>
             </div>
             <p className="text-purple-100/50 text-sm leading-relaxed max-w-xs">
-              Building the digital and physical infrastructure for Africa’s formalized recycling economy. 
+              Building the digital and physical infrastructure for Africa&apos;s formalized recycling economy. 
               Efficiency. Transparency. Sustainability.
             </p>
             <div className="flex space-x-4">
@@ -49,7 +49,7 @@ export function Footer() {
             <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">Platform</h4>
             <ul className="space-y-4 text-sm text-purple-100/60 font-medium">
               <li className="hover:text-white transition-colors cursor-pointer">Materials</li>
-              <li className="hover:text-white transition-colors cursor-pointer">RecycOp UI</li>
+              <li className="hover:text-white transition-colors cursor-pointer">RecycWorks UI</li>
               <li className="hover:text-white transition-colors cursor-pointer">Logistics</li>
               <li className="hover:text-white transition-colors cursor-pointer">Privacy</li>
             </ul>
@@ -65,7 +65,7 @@ export function Footer() {
               </li>
               <li className="flex items-center space-x-3">
                 <EnvelopeIcon className="h-4 w-4 text-emerald-400" />
-                <span>ops@recycop.com</span>
+                <span>ops@RecycWorks.com</span>
               </li>
               <li className="flex items-center space-x-3">
                 <PhoneIcon className="h-4 w-4 text-emerald-500" />
@@ -92,7 +92,7 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 text-[11px] font-bold uppercase tracking-widest text-white/30">
-          <p>© {currentYear} RecycOp Africa. All rights reserved.</p>
+          <p>© {currentYear} RecycWorks Africa. All rights reserved.</p>
           <div className="flex space-x-8">
             <span className="hover:text-emerald-400 cursor-pointer transition-colors">Terms of Service</span>
             <span className="hover:text-emerald-400 cursor-pointer transition-colors">Environmental Compliance</span>

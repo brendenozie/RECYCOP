@@ -4,54 +4,42 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { TrendingUp, Loader2, Mail } from "lucide-react";
+import { motion } from "framer-motion";
+import { 
+  CpuChipIcon, 
+  ArrowLeftIcon, 
+  EnvelopeIcon, 
+  LockClosedIcon,
+  ArrowPathIcon,
+  ExclamationTriangleIcon
+} from "@heroicons/react/24/outline";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-context";
+import { cn } from "@/lib/utils";
 
 export default function LoginPage() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isEmailVerificationError, setIsEmailVerificationError] =
-    useState(false);
-  const [isResendingVerification, setIsResendingVerification] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isEmailVerificationError, setIsEmailVerificationError] = useState(false);
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading, login } = useAuth();
 
-  // Get redirect URL from search params
-  const redirectTo = searchParams.get("redirect") || "/signals";
+  const redirectTo = searchParams.get("redirect") || "/admindashboard";
 
-  // Redirect if user is already authenticated
   useEffect(() => {
-    if (!authLoading && user && !isRedirecting) {
-      // Check if user is an admin
-      const isAdmin =
-        (user as any).isAdmin ||
-        (user as any).role === "super_admin" ||
-        (user as any).role === "admin";
-      const destination = isAdmin ? "/admin/dashboard" : redirectTo;
-      // console.log('✅ User already authenticated, redirecting to:', destination);
-      setIsRedirecting(true);
+    if (!authLoading && user) {
+      // Role-based redirection logic for RecycOp
+      let destination = redirectTo;
+      if (user.role === 'admin') destination = '/admin/stats';
+      if (user.role === 'driver') destination = '/mobile/transit';
+      if (user.role === 'operations') destination = '/ops/verification';
+      
       router.replace(destination);
     }
-  }, [user, authLoading, router, redirectTo, isRedirecting]);
+  }, [user, authLoading, router, redirectTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,319 +50,131 @@ export default function LoginPage() {
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        toast.success("Welcome back!");
-
-        // Check if user is admin and redirect accordingly
-        if (
-          data.user?.isAdmin ||
-          data.user?.role === "super_admin" ||
-          data.user?.role === "admin"
-        ) {
-          // console.log('Admin user detected, redirecting to admin dashboard');
-          login(data.token, "/admin/dashboard");
-        } else {
-          // console.log('Regular user detected, redirecting to:', redirectTo);
-          login(data.token, redirectTo);
-        }
+        toast.success(`Welcome back, ${data.user.firstName}`);
+        login(data.token, data.user.role); // login handles internal redirection logic
       } else {
         const errorMessage = data.error || "Login failed";
         setError(errorMessage);
-
-        // Check if it's an email verification error
-        if (errorMessage.includes("verify your email address")) {
-          setIsEmailVerificationError(true);
-        }
+        if (errorMessage.includes("verify your email")) setIsEmailVerificationError(true);
       }
-    } catch (error) {
-      setError("Network error. Please try again.");
+    } catch (err) {
+      setError("Network connectivity issue. Please check your connection.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleResendVerification = async () => {
-    if (!formData.email) {
-      toast.error("Please enter your email address first");
-      return;
-    }
-
-    setIsResendingVerification(true);
-    try {
-      const response = await fetch("/api/auth/resend-verification", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: formData.email }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success("Verification email sent successfully!");
-        setIsEmailVerificationError(false);
-        setError("");
-      } else {
-        toast.error(data.error || "Failed to resend verification email");
-      }
-    } catch (error) {
-      toast.error("An error occurred. Please try again.");
-    } finally {
-      setIsResendingVerification(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setIsGoogleLoading(true);
-    try {
-      const result = await signIn("google", {
-        callbackUrl:
-          formData.email === "admin@recycop.com"
-            ? "/admin/dashboard"
-            : redirectTo,
-        redirect: true,
-      });
-
-      if (result?.error) {
-        toast.error("Google sign in failed. Please try again.");
-        setIsGoogleLoading(false);
-      }
-    } catch (error) {
-      console.error("Google sign in error:", error);
-      toast.error("An error occurred during Google sign in.");
-      setIsGoogleLoading(false);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  // Show loading while checking authentication
-  if (authLoading) {
+  if (authLoading || user) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-white dark:bg-black">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">
-            Checking authentication...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render login form if user is already authenticated
-  if (user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-white dark:bg-black">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">
-            Redirecting to dashboard...
-          </p>
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0118]">
+        <div className="flex flex-col items-center gap-4">
+          <ArrowPathIcon className="w-10 h-10 text-emerald-500 animate-spin" />
+          <p className="text-purple-200/60 text-xs uppercase tracking-widest font-bold">Initializing Session...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-white dark:bg-black">
-      <div className="w-full max-w-md">
-        {/* Back to Home Button */}
-        <div className="mb-4">
-          <Link href="/">
-            <Button
-              variant="ghost"
-              className="text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              ← Back to Home
-            </Button>
-          </Link>
-        </div>
+    <div className="min-h-screen bg-[#0a0118] relative flex items-center justify-center overflow-hidden px-4">
+      {/* Cinematic Background Elements */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-full" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full" />
 
-        {/* Logo */}
-        <div className="flex items-center justify-center mb-8">
-          <Link href="/" className="relative h-10">
-            <img
-              src="/logo-light.png"
-              alt="GIFTECHLogo"
-              className="h-10 w-auto dark:hidden"
-            />
-            <img
-              src="/logo-dark.png"
-              alt="GIFTECHLogo"
-              className="h-10 w-auto hidden dark:block"
-            />
+      <div className="w-full max-w-md relative z-10">
+        {/* Back Button */}
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+          <Link href="/" className="group flex items-center gap-2 text-purple-200/50 hover:text-emerald-400 transition-colors mb-8 text-xs font-bold uppercase tracking-widest">
+            <ArrowLeftIcon className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            Back to Ecosystem
           </Link>
-        </div>
+        </motion.div>
 
-        <Card className="bg-white dark:bg-black border-gray-200 dark:border-gray-800">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl text-black dark:text-white">
-              Welcome Back
-            </CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-400">
-              Sign in to access your trading signals dashboard
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-4"
-              autoComplete="on"
-            >
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-black dark:text-white">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
+        {/* Login Card */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 md:p-10 shadow-2xl"
+        >
+          <div className="text-center mb-10">
+            <div className="inline-flex p-3 rounded-2xl bg-emerald-500/10 text-emerald-400 mb-4 border border-emerald-500/20">
+              <CpuChipIcon className="w-8 h-8" />
+            </div>
+            <h1 className="text-3xl font-serif italic text-white mb-2">Welcome Back</h1>
+            <p className="text-purple-200/50 text-sm">Access the RecycOp Intelligence Portal</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-[0.2em] font-black text-purple-200/40 ml-1">Email Address</label>
+              <div className="relative">
+                <EnvelopeIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-200/30" />
+                <input
                   type="email"
                   required
                   value={formData.email}
-                  onChange={handleChange}
-                  autoComplete="email"
-                  className="bg-white dark:bg-black border-gray-300 dark:border-gray-600 text-black dark:text-white"
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all"
+                  placeholder="name@recycworks.africa"
                 />
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label
-                  htmlFor="password"
-                  className="text-black dark:text-white"
-                >
-                  Password
-                </Label>
-                <Input
-                  id="password"
-                  name="password"
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-[0.2em] font-black text-purple-200/40 ml-1">Secure Password</label>
+              <div className="relative">
+                <LockClosedIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-200/30" />
+                <input
                   type="password"
                   required
                   value={formData.password}
-                  onChange={handleChange}
-                  autoComplete="current-password"
-                  className="bg-white dark:bg-black border-gray-300 dark:border-gray-600 text-black dark:text-white"
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all"
+                  placeholder="••••••••"
                 />
               </div>
-
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                  {isEmailVerificationError && (
-                    <div className="mt-3 pt-3 border-t border-red-200 dark:border-red-800">
-                      <p className="text-sm text-red-700 dark:text-red-300 mb-2">
-                        Need a new verification email?
-                      </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleResendVerification}
-                        disabled={isResendingVerification}
-                        className="w-full border-red-300 text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/20"
-                      >
-                        {isResendingVerification ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Sending...
-                          </>
-                        ) : (
-                          <>
-                            <Mail className="w-4 h-4 mr-2" />
-                            Resend Verification Email
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  )}
-                </Alert>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing In...
-                  </>
-                ) : (
-                  "Sign In"
-                )}
-              </Button>
-            </form>
-
-            {/* Divider */}
-            <div className="mt-6 mb-6 flex items-center">
-              <div className="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
-              <span className="px-4 text-sm text-gray-600 dark:text-gray-400">
-                or
-              </span>
-              <div className="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
             </div>
 
-            {/* Google Login Button - Placeholder */}
-            {/* <Button 
-              type="button" 
-              variant="outline"
-              className="w-full border-gray-300 dark:border-gray-600 text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800" 
-              onClick={handleGoogleSignIn}
-              disabled={isGoogleLoading}
+            {error && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex gap-3 items-center">
+                <ExclamationTriangleIcon className="w-5 h-5 text-red-400 shrink-0" />
+                <p className="text-xs text-red-200/80 leading-relaxed">{error}</p>
+              </motion.div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-emerald-500 hover:bg-emerald-400 text-[#0a0118] font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {isGoogleLoading ? (
+              {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Connecting to Google...
+                  <ArrowPathIcon className="w-5 h-5 animate-spin" />
+                  Authenticating...
                 </>
-              ) : (
-                <>
-                  <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                  Continue with Google
-                </>
-              )}
-            </Button> */}
+              ) : "Enter Dashboard"}
+            </button>
+          </form>
 
-            <div className="mt-6 text-center text-sm">
-              <span className="text-gray-600 dark:text-gray-400">{`Don't have an account?`}</span>
-              <Link
-                href="/register"
-                className="text-green-600 hover:text-green-700 hover:underline"
-              >
-                Create one
+          <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-4 text-center">
+            <Link href="/forgot-password" className="text-xs text-purple-200/40 hover:text-emerald-400 transition-colors uppercase tracking-widest font-bold">
+              Forgot Password?
+            </Link>
+            <p className="text-xs text-purple-200/30">
+              Not part of the model?{" "}
+              <Link href="/register" className="text-emerald-400 hover:underline font-bold">
+                Join the Mission
               </Link>
-            </div>
-
-            <div className="mt-4 text-center">
-              <Link
-                href="/forgot-password"
-                className="text-sm text-gray-600 dark:text-gray-400 hover:text-green-600"
-              >
-                Forgot your password?
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+            </p>
+          </div>
+        </motion.div>
       </div>
     </div>
   );

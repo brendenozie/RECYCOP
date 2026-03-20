@@ -4,13 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/navigation";
 import { useAuth } from "@/components/auth-context";
 
-// Recyc & RecycOp Optimized Components
+// Recyc & RecycWorks Optimized Components
 import  HeroSection  from "@/components/heroSection";
 import { ImpactStats } from "@/components/ImpactStats"; 
 import { InsightSection } from "@/components/InsightSection";
 import { ProcessTimeline } from "@/components/ProcessTimeline"; 
 import { MaterialGrid } from "@/components/MaterialGrid"; 
-import { RecycOpShowcase } from "@/components/RecycOpShowcase";
+import { RecycWorksShowcase } from "@/components/RecycOpShowcase";
 import { ServicePortfolio } from "@/components/ServicePortfolio";
 import { PartnerTestimonials } from "@/components/PartnerTestimonials";
 import { CooperativeCTA } from "@/components/CooperativeCTA";
@@ -59,7 +59,7 @@ export default function HomePage() {
 
           {/* 6. THE PLATFORM: The SaaS / Intelligence layer (Dark Mode Focus) */}
           <section className="bg-slate-950">
-            <RecycOpShowcase />
+            <RecycWorksShowcase />
           </section>
 
           {/* 7. THE SERVICES: Physical infrastructure Bento Grid */}

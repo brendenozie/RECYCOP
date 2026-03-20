@@ -46,7 +46,7 @@ export default function HeroSection(){
               </h1>
 
               <p className="mt-8 max-w-xl text-lg leading-relaxed text-slate-600 dark:text-purple-100/70 font-light">
-                Recyc provides the physical infrastructure while RecycOp delivers the digital intelligence. 
+                Recyc provides the physical infrastructure while RecycWorks delivers the digital intelligence. 
                 Together, we are formalizing the recycling sector through cooperative-led innovation.
               </p>
 
@@ -56,7 +56,7 @@ export default function HeroSection(){
                   <ArrowRightIcon className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </button>
                 <button className="flex items-center justify-center rounded-2xl border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/5 px-8 py-4 font-bold backdrop-blur-md transition-all hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-white">
-                  Explore RecycOp
+                  Explore RecycWorks
                   <ChevronRightIcon className="ml-2 h-5 w-5 text-purple-500 dark:text-purple-300" />
                 </button>
               </div>
@@ -95,7 +95,7 @@ export default function HeroSection(){
                     <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg text-emerald-600 dark:text-emerald-400">
                       <CpuChipIcon className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/70">RecycOp Live</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/70">RecycWorks Live</span>
                   </div>
                   <div className="space-y-2">
                     <div className="h-1.5 w-32 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">

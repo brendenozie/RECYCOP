@@ -2,99 +2,120 @@
 
 import { Navbar } from "@/components/navigation";
 import { Footer } from "@/components/footer";
+import { motion } from "framer-motion";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { 
+  QuestionMarkCircleIcon, 
+  SparklesIcon, 
+  ShieldCheckIcon, 
+  CpuChipIcon,
+  GlobeAmericasIcon
+} from "@heroicons/react/24/outline";
 
 export default function FAQsPage() {
   const faqs = [
     {
-      question: "What are trading signals?",
+      question: "What is the RecycOp Phygital Model?",
       answer:
-        "Trading signals are alerts that suggest when to buy or sell a particular financial asset. Our AI-powered signals analyze market data and patterns to provide you with accurate trading recommendations.",
+        "RecycOp bridges the gap between physical waste collection and digital intelligence. We provide the infrastructure for waste cooperatives to formalize their operations using AI-driven logistics and transparent digital ledgers.",
     },
     {
-      question: "How accurate are the signals?",
+      question: "How does the 'Waste-to-Wealth' transition work?",
       answer:
-        "Our trading signals have demonstrated up to 93% accuracy based on historical data. However, no trading system is 100% accurate, and past performance does not guarantee future results. We recommend using our signals as one tool among many in your trading strategy.",
+        "By digitizing the collection process, we turn raw waste data into valuable assets. Suppliers and collectors gain access to real-time pricing, optimized routes, and micro-investment opportunities based on their collection volume.",
     },
     {
-      question: "How do I receive signals?",
-      answer: "Signals are automatically generated on chart in real-time.",
-      // "Signals are delivered through multiple channels depending on your subscription plan: email notifications, in-app alerts, and WhatsApp messages for premium subscribers.",
+      question: "Is the platform optimized for Kenyan infrastructure?",
+      answer:
+        "Absolutely. The system is built to align with the Kenya Vision 2030 framework and the CBC curriculum. It supports offline-first data entry for remote areas and integrates seamlessly with local payment gateways like M-Pesa through Pesapal.",
     },
     {
-      question: "Can I use the platform on mobile?",
+      question: "How secure is my operational data?",
       answer:
-        "Yes! GIFTECHis fully mobile responsive and works seamlessly on smartphones and tablets. You can access all features and receive notifications on the go.",
-    },
-    {
-      question: "What payment methods do you accept?",
-      answer:
-        "We accept multiple payment methods including Stripe, Paystack, and Pesapal. Your payment information is securely processed and encrypted.",
-    },
-    {
-      question: "Can I cancel my subscription anytime?",
-      answer:
-        "Yes, you can cancel your subscription at any time. There are no long-term contracts or hidden fees. Your access will continue until the end of your billing period.",
-    },
-    {
-      question: "Is my personal data safe?",
-      answer:
-        "We take data security very seriously. All personal information is encrypted and stored securely. We comply with international data protection regulations including GDPR.",
-    },
-    {
-      question: "Do you offer a free trial?",
-      answer:
-        "Yes, we offer a limited free trial to new users so you can experience the platform before committing to a subscription.",
-    },
-    {
-      question: "What assets can I trade with your signals?",
-      answer:
-        "Our signals cover forex pairs, cryptocurrencies, and stocks. We continuously expand our coverage to include new trading instruments.",
-    },
-    {
-      question: "How often are new signals generated?",
-      answer:
-        "Signals are generated continuously throughout market hours. Depending on your subscription plan, you can receive up to 35+ signals per day.",
+        "We treat waste data as financial data. All collection records are encrypted and stored on a distributed ledger, ensuring that 100-tonne records and supplier payouts remain tamper-proof and transparent.",
     },
   ];
 
   return (
-    <>
+    <div className="min-h-screen bg-[#0a0118] text-white overflow-hidden">
       <Navbar />
-      <main className="min-h-screen bg-white dark:bg-black">
-        {/* Header */}
-        <section className="max-w-4xl mx-auto px-4 py-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-black dark:text-white mb-4">
-            Frequently Asked Questions
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            Find answers to common questions about GIFTECHand our trading
-            signals.
-          </p>
+      
+      {/* Background Cinematic Elements */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-purple-600/10 to-transparent blur-[120px] pointer-events-none" />
+
+      <main className="relative z-10">
+        {/* Header Section */}
+        <section className="max-w-5xl mx-auto px-6 py-24 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="inline-flex p-3 rounded-2xl bg-emerald-500/10 text-emerald-400 mb-6 border border-emerald-500/20">
+              <QuestionMarkCircleIcon className="w-8 h-8" />
+            </div>
+            <h1 className="text-4xl md:text-6xl font-serif italic mb-6">
+              Intelligence <span className="text-emerald-400 text-3xl md:text-5xl not-italic font-sans font-black uppercase tracking-tighter">FAQ</span>
+            </h1>
+            <p className="text-purple-200/50 max-w-2xl mx-auto text-sm md:text-base tracking-wide leading-relaxed">
+              Explore the technical and operational framework of the RecycOp ecosystem. 
+              Bridging the gap between waste and wealth through innovation.
+            </p>
+          </motion.div>
         </section>
 
         {/* FAQs Accordion */}
-        <section className="max-w-4xl mx-auto px-4 pb-16">
-          <Accordion type="single" collapsible className="w-full">
-            {faqs.map((faq, index) => (
-              <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-lg font-semibold text-black dark:text-white hover:text-green-600">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-gray-600 dark:text-gray-400">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
+        <section className="max-w-3xl mx-auto px-6 pb-32">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-4 md:p-8 shadow-2xl"
+          >
+            <Accordion type="single" collapsible className="w-full space-y-4">
+              {faqs.map((faq, index) => (
+                <AccordionItem 
+                  key={index} 
+                  value={`item-${index}`}
+                  className="border-white/5 px-4 rounded-2xl transition-all hover:bg-white/[0.02]"
+                >
+                  <AccordionTrigger className="text-left text-sm md:text-base font-bold text-purple-100 hover:text-emerald-400 hover:no-underline py-6">
+                    <span className="flex items-center gap-4">
+                      <span className="text-emerald-500/40 font-mono text-xs">0{index + 1}</span>
+                      {faq.question}
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-purple-200/50 text-sm leading-relaxed pb-6 pl-10">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </motion.div>
+
+          {/* Quick Help Bento Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+            {[
+              { icon: CpuChipIcon, label: "Tech Support", sub: "API & Integration" },
+              { icon: GlobeAmericasIcon, label: "Operations", sub: "Logistics & Hubs" },
+              { icon: ShieldCheckIcon, label: "Security", sub: "Data & Privacy" }
+            ].map((item, i) => (
+              <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-[2rem] flex flex-col items-center text-center group hover:bg-emerald-500/10 transition-colors cursor-pointer">
+                <item.icon className="w-6 h-6 text-emerald-400 mb-3 group-hover:scale-110 transition-transform" />
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-white">{item.label}</h3>
+                <p className="text-[10px] text-purple-200/30 font-bold">{item.sub}</p>
+              </div>
             ))}
-          </Accordion>
+          </div>
         </section>
       </main>
+
       <Footer />
-    </>
+    </div>
   );
 }

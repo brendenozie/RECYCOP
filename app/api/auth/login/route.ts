@@ -1,89 +1,104 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { findUser, verifyPassword, generateToken } from '@/lib/auth';
-import { getDatabase } from '@/lib/mongodb';
+import { NextRequest, NextResponse } from "next/server";
+import { findUser, verifyPassword, generateToken } from "@/lib/auth";
+import { getDatabase } from "@/lib/mongodb";
 
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
 
-    // Validate input
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
+        { error: "Email and password are required" },
+        { status: 400 },
       );
     }
 
-    // Check if user is an admin first
     const db = await getDatabase();
-    const admin = await db.collection('admins').findOne({ email });
-    
+
+    // 1. Check the 'admins' collection (System-wide Super Admins)
+    const admin = await db.collection("admins").findOne({ email });
+
     if (admin) {
-      // Verify admin password
       const isValidPassword = await verifyPassword(password, admin.password);
       if (!isValidPassword) {
-        // console.log('Admin login failed for email:', email);
         return NextResponse.json(
-          { error: 'Invalid credentials' },
-          { status: 401 }
+          { error: "Invalid credentials" },
+          { status: 401 },
         );
       }
 
-      // Generate token for admin
-      const token = generateToken(admin._id.toString(),admin.email,admin.role);
+      // Generate token with Super Admin role
+      const token = generateToken(
+        admin._id.toString(),
+        admin.email,
+        "admin",
+        true,
+      );
 
-      // Remove password from response
-      const { password: _, ...adminWithoutPassword } = admin;
+      const { password: _, ...adminData } = admin;
 
       return NextResponse.json({
-        message: 'Login successful',
+        message: "Admin login successful",
         token,
         user: {
-          ...adminWithoutPassword,
+          ...adminData,
           _id: admin._id.toString(),
-          role: admin.role,
+          role: "admin",
           isAdmin: true,
         },
       });
     }
 
-    // Find regular user
+    // 2. Check the 'users' collection (Operations, Suppliers, Drivers)
     const user = await findUser(email);
     if (!user) {
-      // console.log('User not found for email:', email);
       return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
+        { error: "Invalid credentials" },
+        { status: 401 },
       );
     }
 
-    // Verify password
     const isValidPassword = await verifyPassword(password, user.password!);
     if (!isValidPassword) {
-      // console.log('User login failed for email:', email);
       return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
+        { error: "Invalid credentials" },
+        { status: 401 },
       );
     }
 
-    // Check if email is verified
-    if (!user.emailVerified) {
-      // console.log('Unverified email login attempt for email:', email);
+    // 3. Status Verification (Important for the RecycWorks onboarding flow)
+    if (user.status === "suspended") {
       return NextResponse.json(
-        { error: 'Please verify your email address before logging in. Check your inbox for a verification link.' },
-        { status: 401 }
+        {
+          error:
+            "Your account has been suspended. Please contact your Hub manager.",
+        },
+        { status: 403 },
       );
     }
 
-    // Generate token
-    const token = generateToken(user._id!,user.email!, user!.role, user.isAdmin);
+    if (user.status === "pending_verification") {
+      return NextResponse.json(
+        {
+          error:
+            "Your account is currently under review by the operations team.",
+        },
+        { status: 403 },
+      );
+    }
 
-    // Remove password from response
+    // 4. Generate token with operational context (Role + Hub)
+    const token = generateToken(
+      user._id!,
+      user.email!,
+      user.role,
+      user.isAdmin || false,
+    );
+
     const { password: _, ...userWithoutPassword } = user;
 
     return NextResponse.json({
-      message: 'Login successful',
+      message: "Login successful",
       token,
       user: {
         ...userWithoutPassword,
@@ -91,10 +106,10 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error("RecycWorks Login error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "An unexpected server error occurred" },
+      { status: 500 },
     );
   }
 }
