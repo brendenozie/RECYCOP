@@ -15,16 +15,16 @@ import {
   ArrowPathIcon,
   ScaleIcon,
   BeakerIcon,
-  FunnelIcon,
-  ArrowDownTrayIcon,
   ClockIcon,
   SunIcon,
   MoonIcon
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type Material = {
-  id: string;
+  id: string; // Used locally or maps to database unique keys
+  _id?: string; // MongoDB tracking id
   name: string;
   grade: string;
   weight: string;
@@ -32,17 +32,19 @@ type Material = {
   driver: string;
 };
 
-const initialInventory: Material[] = [
-  { id: "MAT-PET-01", name: "PET Flakes", grade: "Clear/Clean", weight: "12.4t", supplier: "Alpha Aggregators", driver: "John Kamau" },
-  { id: "MAT-HDPE-04", name: "HDPE Regrind", grade: "Mixed Color", weight: "8.2t", supplier: "Coastal Plastics Ltd", driver: "" },
-  { id: "MAT-ALU-09", name: "Aluminum Bale", grade: "UBC Standard", weight: "4.8t", supplier: "Eco-Metal Nairobi", driver: "" },
-];
+type DbRelationNode = { _id: string; name: string; [key: string]: any };
 
 export function Inventory() {
-  const [items, setItems] = useState<Material[]>(initialInventory);
+  const [items, setItems] = useState<Material[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Material | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // --- DATABASE DATA-STREAM RELATION RELIABILITY STATES ---
+  const [categories, setCategories] = useState<DbRelationNode[]>([]);
+  const [suppliers, setSuppliers] = useState<DbRelationNode[]>([]);
+  const [drivers, setDrivers] = useState<DbRelationNode[]>([]);
+  const [isLoadingMatrix, setIsLoadingMatrix] = useState(false);
 
   // Form Controlled Field States
   const [formName, setFormName] = useState("");
@@ -51,19 +53,31 @@ export function Inventory() {
   const [formSupplier, setFormSupplier] = useState("");
   const [formDriver, setFormDriver] = useState("");
 
+  // --- READ: SYNC BOTH ACTIVE INVENTORY AND RELATED PIPELINE STREAMS ---
+  const syncGlobalContext = async () => {
+    setIsLoadingMatrix(true);
+    try {
+      // Parallel batch fetch queries to maximize connectivity response rates
+      const [resInv, resCat, resSup, resDrv] = await Promise.all([
+        fetch("/api/admin/inventory"),
+        fetch("/api/admin/feedstock"),
+        fetch("/api/admin/users?role=supplier"),
+        fetch("/api/admin/users?role=driver")
+      ]);
+
+      if (resInv.ok) setItems(await resInv.json());
+      if (resCat.ok) setCategories(await resCat.json());
+      if (resSup.ok) setSuppliers(await resSup.json());
+      if (resDrv.ok) setDrivers(await resDrv.json());
+    } catch (err) {
+      toast.error("Database connection failure. Running localized fallback registers.");
+    } finally {
+      setIsLoadingMatrix(false);
+    }
+  };
+
   useEffect(() => {
-    const syncData = async () => {
-      try {
-        const response = await fetch('/api/admin/inventory');
-        if (response.ok) {
-          const data = await response.json();
-          setItems(data);
-        }
-      } catch (err) {
-        console.log("Using initial inventory fallbacks.");
-      }
-    };
-    syncData();
+    syncGlobalContext();
   }, []);
 
   // Update form inputs when an item is selected for editing
@@ -71,7 +85,7 @@ export function Inventory() {
     if (editingItem) {
       setFormName(editingItem.name);
       setFormGrade(editingItem.grade);
-      setFormWeight(editingItem.weight.replace(/[^\d.-]/g, ''));
+      setFormWeight(editingItem.weight.replace(/[^\d.-]/g, ""));
       setFormSupplier(editingItem.supplier);
       setFormDriver(editingItem.driver);
     } else {
@@ -80,7 +94,7 @@ export function Inventory() {
   }, [editingItem]);
 
   const getStatus = (item: Material) => {
-    const weightValue = parseFloat(item.weight.replace(/[^\d.-]/g, ''));
+    const weightValue = parseFloat(item.weight.replace(/[^\d.-]/g, ""));
     if (item.driver && item.driver.trim() !== "") {
       return { 
         label: "In Transit", 
@@ -102,12 +116,15 @@ export function Inventory() {
     };
   };
 
+  // --- WRITE / UPDATE: PERSIST CONFIGURATIONS DOWNSTREAM ---
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const formattedWeight = formWeight.endsWith('t') ? formWeight : `${formWeight}t`;
-    const updatedItem: Material = {
-      id: editingItem?.id || `MAT-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+    const formattedWeight = formWeight.endsWith("t") ? formWeight : `${formWeight}t`;
+    const targetId = editingItem?.id || `MAT-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+    
+    const payload: Partial<Material> = {
+      id: targetId,
       name: formName,
       grade: formGrade,
       weight: formattedWeight,
@@ -115,37 +132,53 @@ export function Inventory() {
       driver: formDriver
     };
 
-    const method = editingItem ? "PATCH" : "POST";
-    const url = editingItem ? `/api/admin/inventory/${editingItem.id}` : "/api/admin/inventory";
+    const isEdit = !!editingItem;
+    const method = isEdit ? "PATCH" : "POST";
+    const url = isEdit ? `/api/admin/inventory/${editingItem._id || editingItem.id}` : "/api/admin/inventory";
 
     try {
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedItem),
+        body: JSON.stringify(payload),
       });
 
-      if (response.ok) {
-        const freshRes = await fetch('/api/admin/inventory');
-        if (freshRes.ok) setItems(await freshRes.json());
-        closePanel();
-      } else {
-        throw new Error("Fallback local state updating");
-      }
+      if (!response.ok) throw new Error("Transaction declined on collection endpoint");
+
+      toast.success(isEdit ? "Inventory shipment details modified" : "Incoming batch successfully logged");
+      closePanel();
+      
+      // Re-query database to obtain exact snapshot sequence
+      const freshRes = await fetch("/api/admin/inventory");
+      if (freshRes.ok) setItems(await freshRes.json());
     } catch (err) {
-      // Local Array state backup mutation logic
-      if (editingItem) {
-        setItems(items.map(i => i.id === editingItem.id ? updatedItem : i));
+      // Local Array state backup mutation fallback logic
+      const localFallbackItem = payload as Material;
+      if (isEdit) {
+        setItems(items.map(i => (i._id === editingItem._id || i.id === editingItem.id) ? { ...i, ...localFallbackItem } : i));
       } else {
-        setItems([updatedItem, ...items]);
+        setItems([localFallbackItem, ...items]);
       }
+      toast.info("Saved locally (Offline mode execution)");
       closePanel();
     }
   };
 
-  const deleteItem = (id: string) => {
-    if (confirm("Are you sure you want to completely remove this material load from tracking?")) {
-      setItems(items.filter(i => i.id !== id));
+  // --- REMOVE: DELETE DATA NODE FROM STORAGE ---
+  const deleteItem = async (item: Material) => {
+    const idKey = item._id || item.id;
+    if (!confirm("Are you sure you want to completely remove this material load from tracking?")) return;
+
+    try {
+      const response = await fetch(`/api/admin/inventory/${idKey}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Deletion failed on server route");
+
+      toast.success("Material record cleared from database entry logs");
+      setItems(prev => prev.filter(i => (i._id !== item._id && i.id !== item.id)));
+    } catch (err) {
+      // Local fallback removal fallback option
+      setItems(items.filter(i => (i._id !== item._id && i.id !== item.id)));
+      toast.warning("Cleared from interface cache; server synchronization pending");
     }
   };
 
@@ -169,7 +202,7 @@ export function Inventory() {
 
   // Summary Metrics calculations
   const totalVolume = useMemo(() => {
-    return items.reduce((sum, item) => sum + parseFloat(item.weight.replace(/[^\d.-]/g, '') || "0"), 0).toFixed(1);
+    return items.reduce((sum, item) => sum + parseFloat(item.weight.replace(/[^\d.-]/g, "") || "0"), 0).toFixed(1);
   }, [items]);
 
   const activeDriversCount = useMemo(() => {
@@ -203,7 +236,7 @@ export function Inventory() {
               <div className="flex justify-between items-center mb-8">
                 <div>
                   <h2 className="text-xl font-bold">{editingItem ? "Update Load Info" : "Register New Material Load"}</h2>
-                  <p className="text-xs text-slate-400 mt-1">Fill out cargo specifications below.</p>
+                  <p className="text-xs text-slate-400 mt-1">Fill out cargo specifications below linked to real-time asset variables.</p>
                 </div>
                 <button onClick={closePanel} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors">
                   <XMarkIcon className="w-5 h-5" />
@@ -212,44 +245,90 @@ export function Inventory() {
 
               <form onSubmit={handleSave} className="space-y-5 text-sm">
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Material Details</label>
-                  <input required value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Material Name (e.g. Cardboard Bales)" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-none focus:border-emerald-500" />
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Feedstock Classification Category</label>
+                  <select 
+                    required 
+                    value={formName} 
+                    onChange={(e) => setFormName(e.target.value)} 
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-hidden cursor-pointer focus:border-emerald-500"
+                  >
+                    <option value="" className="text-slate-400">Select Tracked Feedstock Type</option>
+                    {categories.map((cat) => (
+                      <option key={cat._id} value={cat.name} className="dark:bg-slate-900">{cat.name}</option>
+                    ))}
+                    {categories.length === 0 && (
+                      <>
+                        <option value="PP (Polypropylene)" className="dark:bg-slate-900">PP (Polypropylene)</option>
+                        <option value="HDPE (High-Density Polyethylene)" className="dark:bg-slate-900">HDPE (High-Density Polyethylene)</option>
+                        <option value="LDPE (Low-Density Polyethylene)" className="dark:bg-slate-900">LDPE (Low-Density Polyethylene)</option>
+                        <option value="Aluminum Closures" className="dark:bg-slate-900">Aluminum Closures</option>
+                        <option value="Aluminum Cans (UBCs)" className="dark:bg-slate-900">Aluminum Cans (UBCs)</option>
+                      </>
+                    )}
+                  </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Material Grade</label>
-                  <input value={formGrade} onChange={(e) => setFormGrade(e.target.value)} placeholder="Quality Status or Grade (e.g. Grade A Premium)" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-none focus:border-emerald-500" />
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Material Sorting Grade</label>
+                  <input value={formGrade} onChange={(e) => setFormGrade(e.target.value)} placeholder="Quality Status or Grade (e.g. UBC Standard Flakes)" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-hidden focus:border-emerald-500" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Weight (in Tons)</label>
-                    <input required type="number" step="0.1" value={formWeight} onChange={(e) => setFormWeight(e.target.value)} placeholder="e.g. 5.4" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-bold text-emerald-600 dark:text-emerald-400 outline-none focus:border-emerald-500" />
+                    <input required type="number" step="0.01" value={formWeight} onChange={(e) => setFormWeight(e.target.value)} placeholder="e.g. 5.4" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-bold text-emerald-600 dark:text-emerald-400 outline-hidden focus:border-emerald-500" />
                   </div>
                   <div className="flex items-center text-[11px] text-slate-400 leading-tight pt-5">
-                    * Weight above 10t auto-triggers verification alerts.
+                    * Net weights above 10t trigger verification review locks.
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Assigned Supplier</label>
-                    <select value={formSupplier} onChange={(e) => setFormSupplier(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-none cursor-pointer">
-                      <option value="">Choose Supplier</option>
-                      <option value="Alpha Aggregators">Alpha Aggregators</option>
-                      <option value="Coastal Plastics Ltd">Coastal Plastics Ltd</option>
-                      <option value="Eco-Metal Nairobi">Eco-Metal Nairobi</option>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Assigned Supplier Partner</label>
+                    <select 
+                      required
+                      value={formSupplier} 
+                      onChange={(e) => setFormSupplier(e.target.value)} 
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-hidden cursor-pointer focus:border-emerald-500"
+                    >
+                      <option value="">Choose Live Supplier Node</option>
+                      {suppliers.map((sup) => (
+                        <option key={sup._id} value={sup.name} className="dark:bg-slate-900">{sup.name}</option>
+                      ))}
+                      {suppliers.length === 0 && (
+                        <>
+                          <option value="Alpha Aggregators" className="dark:bg-slate-900">Alpha Aggregators</option>
+                          <option value="Coastal Plastics Ltd" className="dark:bg-slate-900">Coastal Plastics Ltd</option>
+                          <option value="Eco-Metal Nairobi" className="dark:bg-slate-900">Eco-Metal Nairobi</option>
+                        </>
+                      )}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Transit Driver (Optional)</label>
-                    <input value={formDriver} onChange={(e) => setFormDriver(e.target.value)} placeholder="Leave blank if item is stored in stock" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-none focus:border-emerald-500" />
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Transit Dispatch Driver (Optional)</label>
+                    <select 
+                      value={formDriver} 
+                      onChange={(e) => setFormDriver(e.target.value)} 
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-hidden cursor-pointer focus:border-emerald-500"
+                    >
+                      <option value="">No Active Driver (Stored Statically inside Warehouse)</option>
+                      {drivers.map((drv) => (
+                        <option key={drv._id} value={drv.name} className="dark:bg-slate-900">{drv.name}</option>
+                      ))}
+                      {drivers.length === 0 && (
+                        <>
+                          <option value="John Kamau" className="dark:bg-slate-900">John Kamau</option>
+                          <option value="David Omondi" className="dark:bg-slate-900">David Omondi</option>
+                        </>
+                      )}
+                    </select>
                   </div>
                 </div>
 
-                <button type="submit" className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold uppercase tracking-wider text-xs transition-all shadow-md mt-4">
-                  Save Material to Inventory
+                <button type="submit" className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold uppercase tracking-wider text-xs transition-all shadow-md mt-4 active:scale-[0.99]">
+                  Commit Load to Inventory Ecosystem
                 </button>
               </form>
             </motion.div>
@@ -285,8 +364,8 @@ export function Inventory() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: "Total Recycled Weight", value: `${totalVolume}t`, icon: ScaleIcon, info: "Net on hand" },
-            { label: "Trucks En-Route", value: String(activeDriversCount).padStart(2, '0'), icon: TruckIcon, info: "In active dispatch" },
-            { label: "Quality Checks Passed", value: "98.2%", icon: BeakerIcon, info: "Nairobi Standard" },
+            { label: "Trucks En-Route", value: String(activeDriversCount).padStart(2, "0"), icon: TruckIcon, info: "In active dispatch" },
+            { label: "Quality Checks Passed", value: "98.2%", icon: BeakerIcon, info: "Standard Matrix Validation" },
             { label: "Last System Backup", value: "Live", icon: ArrowPathIcon, info: "Synced seamlessly" },
           ].map((stat, i) => (
             <div key={i} className="p-4 sm:p-5 border rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-xs">
@@ -305,7 +384,16 @@ export function Inventory() {
           <div className="p-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Storage Log Data</span>
             <div className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-              <ClockIcon className="w-3.5 h-3.5" /> Updated just now
+              {isLoadingMatrix ? (
+                <>
+                  <ArrowPathIcon className="w-3.5 h-3.5 animate-spin text-emerald-500" />
+                  <span className="text-emerald-500 font-bold uppercase tracking-wider text-[10px]">Refreshing Streams...</span>
+                </>
+              ) : (
+                <>
+                  <ClockIcon className="w-3.5 h-3.5" /> Updated just now
+                </>
+              )}
             </div>
           </div>
           
@@ -314,11 +402,11 @@ export function Inventory() {
             {items.map((item) => {
               const status = getStatus(item);
               return (
-                <div key={item.id} className="p-4 space-y-3.5">
+                <div key={item.id || item._id} className="p-4 space-y-3.5">
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="font-bold text-slate-900 dark:text-white text-sm">{item.name}</h4>
-                      <p className="text-[11px] text-slate-400 font-mono">{item.id} • {item.grade}</p>
+                      <p className="text-[11px] text-slate-400 font-mono">{item.id || "DB-NODE"} • {item.grade}</p>
                     </div>
                     <span className={cn("inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border", status.color)}>
                       <status.icon className="w-3 h-3" /> {status.label}
@@ -346,7 +434,7 @@ export function Inventory() {
                       <button onClick={() => openPanel(item)} className="p-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-600 dark:text-slate-300">
                         <PencilSquareIcon className="w-4 h-4" />
                       </button>
-                      <button onClick={() => deleteItem(item.id)} className="p-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-slate-800 rounded-lg text-red-600">
+                      <button onClick={() => deleteItem(item)} className="p-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-slate-800 rounded-lg text-red-600">
                         <TrashIcon className="w-4 h-4" />
                       </button>
                     </div>
@@ -372,11 +460,11 @@ export function Inventory() {
                 {items.map((item) => {
                   const status = getStatus(item);
                   return (
-                    <tr key={item.id} className="hover:bg-slate-50/40 dark:hover:bg-white/[0.01] transition-colors">
+                    <tr key={item.id || item._id} className="hover:bg-slate-50/40 dark:hover:bg-white/[0.01] transition-colors">
                       <td className="p-4 pl-6">
                         <div>
                           <p className="font-bold text-sm text-slate-900 dark:text-white">{item.name}</p>
-                          <p className="text-[11px] font-mono text-slate-400 tracking-tight">{item.id} — Grade: {item.grade}</p>
+                          <p className="text-[11px] font-mono text-slate-400 tracking-tight">{item.id || "DB-NODE"} — Grade: {item.grade}</p>
                         </div>
                       </td>
                       <td className="p-4 text-center whitespace-nowrap">
@@ -405,7 +493,7 @@ export function Inventory() {
                           <button onClick={() => openPanel(item)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-slate-800 rounded-xl transition-all text-slate-500">
                             <PencilSquareIcon className="w-4 h-4" />
                           </button>
-                          <button onClick={() => deleteItem(item.id)} className="p-2 hover:bg-red-50 text-red-600 border border-transparent hover:border-red-100 dark:hover:border-red-950/30 rounded-xl transition-all">
+                          <button onClick={() => deleteItem(item)} className="p-2 hover:bg-red-50 text-red-600 border border-transparent hover:border-red-100 dark:hover:border-red-950/30 rounded-xl transition-all">
                             <TrashIcon className="w-4 h-4" />
                           </button>
                         </div>

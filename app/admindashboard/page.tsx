@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 
 // --- Components ---
 import { UserAccess } from "./components/userAccess";
-import { Logistics } from "./components/fleetRadar";
+import { Fleet } from "./components/fleetRadar";
 import { Hubs } from "./components/regionalHubs";
 import { Inventory } from "./components/materialLedger";
 import { Analytics } from "./components/impactReports";
@@ -28,14 +28,16 @@ import { CommandCenter } from "./components/commandCenter";
 import { SystemConfig } from "./components/systemConfig";
 import { RouteManager } from "./components/checkpoints";
 import AdminPaymentDashboard from "./components/adminPaymentDashboard";
+import { FeedstockCategories } from "./components/FeedstockCategories";
 
 const navItems = [
   { id: "overview", label: "Dashboard", icon: Squares2X2Icon },
   { id: "users", label: "User Access", icon: UserGroupIcon },
+  { id: "feedstock", label: "Feedstock Categories", icon: Squares2X2Icon },
   { id: "inventory", label: "Material Ledger", icon: ArchiveBoxIcon },
   { id: "hubs", label: "Regional Hubs", icon: MapIcon },
   { id: "checkpoints", label: "Checkpoints", icon: IdentificationIcon },
-  { id: "logistics", label: "Fleet Radar", icon: TruckIcon },
+  { id: "fleet", label: "Fleet", icon: TruckIcon },
   { id: "analytics", label: "Impact Reports", icon: ChartBarIcon },
   { id: "payouts", label: "Payouts", icon: CurrencyDollarIcon },
 ];
@@ -218,10 +220,11 @@ export default function AdminDashboard() {
             >
               {activeTab === "overview" && <CommandCenter />}
               {activeTab === "users" && <UserAccess />}
-              {activeTab === "logistics" && <Logistics />}
+              {activeTab === "feedstock" && <FeedstockCategories />}
+              {activeTab === "inventory" && <Inventory />}
               {activeTab === "hubs" && <Hubs />}
               {activeTab === "checkpoints" && <RouteManager />}
-              {activeTab === "inventory" && <Inventory />}
+              {activeTab === "fleet" && <Fleet />}
               {activeTab === "payouts" && <AdminPaymentDashboard />}
               {activeTab === "analytics" && <Analytics />}
               {activeTab === "config" && <SystemConfig />}

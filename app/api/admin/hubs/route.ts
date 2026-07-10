@@ -5,9 +5,22 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     const db = await getDatabase();
-    const hubs = await db.collection("hubs").find({}).toArray();
-    return NextResponse.json(hubs);
+    const rawHubs = await db.collection("hubs").find({}).toArray();
+
+    // Normalize MongoDB _id string format to match frontend mapping key structure
+    const cleanHubs = rawHubs.map((hub) => ({
+      id: hub._id.toString(),
+      name: hub.name,
+      location: hub.location,
+      load: hub.load || 0,
+      status: hub.status || "Optimal",
+      coords: hub.coords,
+      supplierIds: hub.supplierIds || [],
+    }));
+
+    return NextResponse.json(cleanHubs);
   } catch (error) {
+    console.error("[Hubs Collection Engine Error]:", error);
     return NextResponse.json(
       { error: "Failed to fetch hub grid" },
       { status: 500 },
@@ -29,19 +42,19 @@ export async function POST(request: Request) {
         neighborhood: body.neighborhood,
         phase: body.phase,
       },
+      supplierIds: Array.isArray(body.supplierIds) ? body.supplierIds : [],
       load: Number(body.load) || 0,
       status: body.status || "Optimal",
-      // If coordinates aren't provided, we generate random ones for the tactical map
       coords: body.coords || {
-        x: `${Math.floor(Math.random() * 80 + 10)}%`,
-        y: `${Math.floor(Math.random() * 80 + 10)}%`,
+        x: `${Math.floor(Math.random() * 60 + 20)}%`,
+        y: `${Math.floor(Math.random() * 50 + 25)}%`,
       },
       createdAt: new Date(),
     };
 
     const result = await db.collection("hubs").insertOne(newHub);
     return NextResponse.json(
-      { _id: result.insertedId, ...newHub },
+      { id: result.insertedId.toString(), ...newHub },
       { status: 201 },
     );
   } catch (error) {
