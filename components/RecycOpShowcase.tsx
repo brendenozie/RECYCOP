@@ -16,150 +16,155 @@ import {
 export function RecycWorksShowcase() {
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Subtle parallax for the dashboard mockup
+  // Parallax properties for the main preview layout
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"],
   });
 
-  const rotateX = useTransform(scrollYProgress, [0, 1], [10, -10]);
-  const translateZ = useTransform(scrollYProgress, [0, 1], [0, 50]);
+  const rotateX = useTransform(scrollYProgress, [0, 1], [6, -6]);
+  const translateZ = useTransform(scrollYProgress, [0, 1], [0, 30]);
 
   return (
-    <section ref={containerRef} className="relative py-32 bg-white dark:bg-[#05010d] transition-colors duration-500 overflow-hidden">
+    <section ref={containerRef} className="relative py-16 sm:py-24 md:py-32 bg-white dark:bg-[#05010d] transition-colors duration-500 overflow-hidden">
       
       {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-emerald-500/10 dark:bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] lg:w-[800px] h-[500px] bg-emerald-500/10 dark:bg-emerald-500/5 blur-[100px] sm:blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="container relative z-10 mx-auto px-6">
-        <div className="flex flex-col lg:flex-row items-center gap-20">
+      <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
           
-          {/* --- LEFT: The Narrative Hub --- */}
-          <div className="lg:w-2/5 space-y-10">
-            <div className="space-y-6">
+          {/* --- LEFT SIDE: Features Information Hub --- */}
+          <div className="w-full lg:w-2/5 space-y-8 sm:space-y-10 text-center lg:text-left">
+            <div className="space-y-4 sm:space-y-6">
               <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-[0.3em] text-[10px]"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-wide text-[10px]"
               >
                 <BoltIcon className="h-4 w-4" />
-                <span>Operating System</span>
+                <span>The Control Center</span>
               </motion.div>
               
-              <h2 className="font-serif text-5xl md:text-7xl text-slate-900 dark:text-white leading-[1.1]">
-                The Brain of the <br />
-                <span className="text-emerald-600 dark:text-emerald-400 italic font-light underline decoration-emerald-500/20 underline-offset-8">Supply Chain.</span>
+              <h2 className="font-sans font-extrabold text-3xl sm:text-5xl md:text-6xl text-slate-900 dark:text-white leading-[1.15] tracking-tight">
+                The Smart Brain <br className="hidden sm:inline" />
+                Behind Our <span className="text-emerald-600 dark:text-emerald-400">Operations.</span>
               </h2>
               
-              <p className="text-slate-500 dark:text-purple-100/60 text-lg font-light leading-relaxed max-w-md">
-                RecycWorks is a logistics engine that coordinates thousands of collectors, 
-                validates material purity, and provides the transparency global buyers demand.
+              <p className="text-slate-600 dark:text-purple-100/70 text-base sm:text-lg font-normal leading-relaxed max-w-xl mx-auto lg:mx-0">
+                Our tracking platform connects neighborhoods, counts exact weights, monitors material quality, and ensures local groups get paid fairly by big manufacturing plants.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto lg:mx-0 text-left">
               {[
-                { icon: CircleStackIcon, title: "Traceability", text: "Real-time KG tracking" },
-                { icon: MapIcon, title: "Geospatial", text: "Logistics optimization" },
-                { icon: UserGroupIcon, title: "Membership", text: "Co-op governance" },
-                { icon: FingerPrintIcon, title: "Purity", text: "Material validation" },
+                { icon: CircleStackIcon, title: "Weight Tracking", text: "Real-time kilogram recording" },
+                { icon: MapIcon, title: "Route Mapping", text: "Optimized collection transport" },
+                { icon: UserGroupIcon, title: "Group Management", text: "Cooperative member systems" },
+                { icon: FingerPrintIcon, title: "Quality Check", text: "Instant material validation" },
               ].map((item, i) => (
                 <motion.div 
                   key={i}
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="group flex flex-col gap-3 p-4 rounded-2xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 hover:border-emerald-500/30 transition-all"
+                  transition={{ delay: i * 0.05 }}
+                  viewport={{ once: true }}
+                  className="group flex items-start gap-4 p-4 rounded-xl border border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-white/5 transition-all duration-300"
                 >
-                  <item.icon className="h-6 w-6 text-emerald-500 group-hover:scale-110 transition-transform" />
+                  <div className="p-2 rounded-lg bg-white dark:bg-white/5 shadow-sm text-emerald-500 flex-shrink-0">
+                    <item.icon className="h-5 w-5 group-hover:scale-105 transition-transform" />
+                  </div>
                   <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white">{item.title}</p>
-                    <p className="text-[11px] text-slate-500 dark:text-purple-100/40">{item.text}</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-white">{item.title}</p>
+                    <p className="text-xs text-slate-500 dark:text-purple-100/50 mt-0.5">{item.text}</p>
                   </div>
                 </motion.div>
               ))}
             </div>
           </div>
 
-          {/* --- RIGHT: The Intelligent Dashboard --- */}
-          <div className="lg:w-3/5 w-full perspective-2000">
+          {/* --- RIGHT SIDE: Live Interactive Platform Mockup --- */}
+          <div className="w-full lg:w-3/5 perspective-1000 lg:perspective-2000">
             <motion.div 
-              style={{ rotateX, translateZ }}
-              className="relative rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-slate-950/40 p-3 shadow-2xl backdrop-blur-2xl overflow-hidden shadow-emerald-500/10"
+              style={{ 
+                rotateX: typeof window !== 'undefined' && window.innerWidth > 1024 ? rotateX : 0, 
+                translateZ: typeof window !== 'undefined' && window.innerWidth > 1024 ? translateZ : 0 
+              }}
+              className="relative rounded-3xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-slate-950/40 p-2 sm:p-3 shadow-xl backdrop-blur-xl overflow-hidden"
             >
-              {/* Internal Mockup Container */}
-              <div className="rounded-[2rem] bg-slate-50 dark:bg-[#0a0a0b] overflow-hidden flex h-[600px] border border-slate-200 dark:border-white/5">
+              {/* Internal Window Layout Container */}
+              <div className="rounded-2xl bg-slate-50 dark:bg-[#0a0a0b] overflow-hidden flex flex-col sm:flex-row h-auto sm:h-[520px] md:h-[580px] border border-slate-200/60 dark:border-white/5">
                 
-                {/* Side Dock */}
-                <div className="w-20 border-r border-slate-200 dark:border-white/5 flex flex-col items-center py-8 space-y-10">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center">
-                    <BoltIcon className="h-6 w-6 text-black" />
+                {/* Dashboard Left Icons Bar */}
+                <div className="w-full sm:w-16 border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-white/5 flex sm:flex-col items-center justify-between sm:justify-start p-4 sm:py-6 gap-4 sm:gap-8">
+                  <div className="h-9 w-9 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md">
+                    <BoltIcon className="h-5 w-5 text-slate-900" />
                   </div>
-                  {[ChartBarIcon, MapIcon, UserGroupIcon, AdjustmentsHorizontalIcon].map((Icon, i) => (
-                    <Icon key={i} className="h-6 w-6 text-slate-400 dark:text-white/20 hover:text-emerald-500 transition-colors cursor-pointer" />
-                  ))}
+                  <div className="flex sm:flex-col items-center gap-4 sm:gap-6">
+                    {[ChartBarIcon, MapIcon, UserGroupIcon, AdjustmentsHorizontalIcon].map((Icon, i) => (
+                      <Icon key={i} className="h-5 w-5 text-slate-400 dark:text-white/30 hover:text-emerald-500 transition-colors cursor-pointer" />
+                    ))}
+                  </div>
+                  <div className="hidden sm:block mt-auto h-2 w-2 rounded-full bg-emerald-500" />
                 </div>
 
-                {/* Main Viewport */}
-                <div className="flex-1 p-10 flex flex-col gap-10">
-                  <div className="flex justify-between items-start">
+                {/* Dashboard Main Visual Content Area */}
+                <div className="flex-1 p-5 sm:p-8 flex flex-col gap-6 sm:gap-8 overflow-hidden">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                     <div>
-                      <h3 className="text-[10px] font-black text-slate-400 dark:text-white/30 uppercase tracking-[0.3em] mb-2">Network Node Status</h3>
-                      <p className="text-3xl font-serif text-slate-900 dark:text-white tracking-tight">Nairobi Central Hub</p>
+                      <h3 className="text-[9px] font-bold text-slate-400 dark:text-white/30 uppercase tracking-wider mb-0.5">Network Node Status</h3>
+                      <p className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Nairobi Central Hub</p>
                     </div>
-                    <div className="flex items-center gap-3 bg-emerald-50 dark:bg-emerald-500/10 px-4 py-2 rounded-xl border border-emerald-500/20">
-                      <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]" />
-                      <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-500 tracking-widest">Active Link</span>
+                    <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/10">
+                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-[10px] font-bold uppercase text-emerald-700 dark:text-emerald-400 tracking-wide">Live Feed Connection</span>
                     </div>
                   </div>
 
-                  {/* High-Contrast Data Tiles */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Operational Information Tiles */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[
-                      { label: "Volume (KG)", val: "42,890", change: "+12.4%", color: "emerald" },
-                      { label: "Supply Units", val: "184", change: "+5.1%", color: "purple" },
-                      { label: "Ecosystem Yield", val: "KSh 2.4M", change: "+18.2%", color: "emerald" },
+                      { label: "Total Volume (KG)", val: "42,890", change: "+12.4%" },
+                      { label: "Collection Units", val: "184", change: "+5.1%" },
+                      { label: "Community Earnings", val: "KSh 2.4M", change: "+18.2%" },
                     ].map((stat, i) => (
-                      <div key={i} className="bg-white dark:bg-white/5 rounded-2xl p-6 border border-slate-100 dark:border-white/5 shadow-sm">
-                        <p className="text-[10px] text-slate-400 dark:text-white/40 font-black uppercase tracking-widest mb-4">{stat.label}</p>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono tracking-tighter">{stat.val}</p>
-                        <div className="flex items-center text-emerald-500 text-[10px] mt-4 font-black">
-                          <ArrowUpRightIcon className="h-3 w-3 mr-1 stroke-[3px]" /> {stat.change}
+                      <div key={i} className="bg-white dark:bg-white/5 rounded-xl p-4 border border-slate-200/60 dark:border-white/5 shadow-sm">
+                        <p className="text-[9px] text-slate-400 dark:text-white/40 font-bold uppercase tracking-wide mb-2">{stat.label}</p>
+                        <p className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">{stat.val}</p>
+                        <div className="flex items-center text-emerald-600 dark:text-emerald-400 text-[10px] mt-2 font-bold">
+                          <ArrowUpRightIcon className="h-3 w-3 mr-0.5 stroke-[2.5]" /> {stat.change}
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  {/* Flow Visualization Area */}
-                  <div className="flex-1 bg-white dark:bg-white/5 rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 relative overflow-hidden group">
-                    <div className="flex justify-between items-center mb-10">
-                      <p className="text-[10px] text-slate-400 dark:text-white/40 font-black uppercase tracking-widest">Aggregation Flow (7D)</p>
-                      <span className="text-[10px] font-mono text-emerald-500">Live Telemetry</span>
+                  {/* Flow Analytics Graph Module */}
+                  <div className="flex-1 bg-white dark:bg-white/5 rounded-xl p-5 border border-slate-200/60 dark:border-white/5 relative overflow-hidden group min-h-[160px] flex flex-col justify-between">
+                    <div className="flex justify-between items-center mb-4">
+                      <p className="text-[10px] text-slate-400 dark:text-white/40 font-bold uppercase tracking-wide">Live Weekly Collection View</p>
+                      <span className="text-[9px] font-mono font-bold text-emerald-500 uppercase tracking-wider">Active Monitoring</span>
                     </div>
                     
-                    <div className="flex items-end justify-between h-40 gap-3">
+                    <div className="flex items-end justify-between h-28 sm:h-full gap-2 pt-4 relative z-10">
                       {[40, 70, 45, 90, 65, 80, 100, 55, 75, 85].map((h, i) => (
                         <motion.div 
                           key={i}
                           initial={{ height: 0 }}
                           whileInView={{ height: `${h}%` }}
-                          transition={{ duration: 1.5, delay: i * 0.05, ease: "circOut" }}
-                          className="flex-1 bg-gradient-to-t from-emerald-600/20 to-emerald-500 rounded-t-lg group-hover:from-emerald-500/40 transition-all"
+                          transition={{ duration: 1, delay: i * 0.03, ease: "easeOut" }}
+                          viewport={{ once: true }}
+                          className="flex-1 bg-gradient-to-t from-emerald-600/20 to-emerald-500 rounded-t-sm transition-all duration-300"
                         />
                       ))}
                     </div>
 
-                    {/* Technical Grid Overlay */}
+                    {/* Technical Grid Accent Overlay */}
                     <div className="absolute inset-0 grid grid-cols-6 grid-rows-4 pointer-events-none opacity-[0.03] dark:opacity-[0.05]">
                       {[...Array(24)].map((_, i) => <div key={i} className="border-[0.5px] border-slate-900 dark:border-white" />)}
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Decorative Corner Labels */}
-              <div className="absolute top-10 right-10 text-[8px] font-mono text-slate-400 dark:text-white/20 uppercase tracking-[0.5em] rotate-90 origin-right">
-                RecycWorks_v4.0.2
               </div>
             </motion.div>
           </div>

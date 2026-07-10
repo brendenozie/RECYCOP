@@ -14,7 +14,7 @@ import {
 function Counter({ value, suffix = "" }: { value: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const motionValue = useMotionValue(0);
-  const springValue = useSpring(motionValue, { damping: 40, stiffness: 80 });
+  const springValue = useSpring(motionValue, { damping: 30, stiffness: 70 });
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
   useEffect(() => {
@@ -29,43 +29,43 @@ function Counter({ value, suffix = "" }: { value: number; suffix?: string }) {
     });
   }, [springValue, suffix]);
 
-  return <span ref={ref} className="font-serif italic" />;
+  return <span ref={ref} className="font-extrabold tracking-tight" />;
 }
 
 const stats = [
   {
-    label: "Global Waste Crisis",
+    label: "Money Lost to Waste",
     value: 2,
     suffix: "B+",
     prefix: "$",
-    description: "Annual economic leakage due to unmanaged waste.",
+    description: "Value lost globally every single year from dumped or buried trash.",
     icon: GlobeAmericasIcon,
     color: "emerald",
   },
   {
-    label: "Recycling Rate",
+    label: "Local Recycling Rate",
     value: 20,
     suffix: "%",
     prefix: "",
-    description: "Current average in developing markets. We aim to double this.",
+    description: "The current average nearby. Our goal is to double this number.",
     icon: ArrowTrendingUpIcon,
     color: "purple",
   },
   {
-    label: "Target Informal Actors",
+    label: "Local Collectors Supported",
     value: 50000,
-    suffix: "",
+    suffix: "+",
     prefix: "",
-    description: "Integrating individual collectors into the formal economy.",
+    description: "Helping hard-working neighborhood pickers earn a steady, safe income.",
     icon: UserPlusIcon,
     color: "emerald",
   },
   {
-    label: "Local Value Potential",
+    label: "Value Kept in Communities",
     value: 150,
     suffix: "M",
     prefix: "KSh ",
-    description: "Recoverable value per major regional hub annually.",
+    description: "Extra money brought back into local regional towns each year.",
     icon: CurrencyDollarIcon,
     color: "purple",
   },
@@ -73,11 +73,10 @@ const stats = [
 
 export function ImpactStats() {
   return (
-    <section className="relative py-32 bg-slate-50 dark:bg-[#05010d] transition-colors duration-500 overflow-hidden">
+    <section className="relative py-16 sm:py-24 md:py-32 bg-gradient-to-b from-slate-50 to-white dark:from-[#05010d] dark:to-[#0a0118] transition-colors duration-500 overflow-hidden">
       
       {/* 1. LAYERED LOGISTICS BACKGROUND */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-20 dark:opacity-[0.15]">
-        {/* World Map Line-Art (using pseudo-element for performance) */}
         <div className="absolute inset-0 bg-[url('/world-map-lines.svg')] bg-center bg-no-repeat bg-cover filter invert dark:invert-0" />
         
         {/* Localized Nairobi topological mesh overlay */}
@@ -90,7 +89,7 @@ export function ImpactStats() {
           </defs>
           <rect width="100%" height="100%" fill="url(#nairobi-mesh)" />
           
-          {/* Nairobi "Active Node" Marker */}
+          {/* Active Node Marker */}
           <motion.circle 
             cx="50%" 
             cy="50%" 
@@ -104,87 +103,93 @@ export function ImpactStats() {
         </svg>
 
         {/* Depth Mask */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-50 dark:from-[#05010d] via-transparent to-slate-50 dark:to-[#05010d]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50 dark:from-[#05010d] via-transparent to-white dark:to-[#0a0118]" />
       </div>
 
-      <div className="container relative z-10 mx-auto px-6">
+      <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Section Heading */}
         <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="max-w-2xl mb-20 flex items-center gap-6"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-3xl mb-12 md:mb-20 text-center md:text-left flex flex-col md:flex-row items-center gap-4 md:gap-6"
         >
-            <MapPinIcon className="hidden md:block h-16 w-16 text-emerald-600 dark:text-emerald-400/40 opacity-50" strokeWidth={0.5} />
-            <div>
-                <h2 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-600 dark:text-emerald-400 mb-4">
-                    Network Intelligence
-                </h2>
-                <p className="text-3xl md:text-4xl font-serif text-slate-900 dark:text-white leading-tight">
-                    Turning environmental pressure into <span className="italic text-purple-600 dark:text-purple-400">economic yield.</span>
-                </p>
-            </div>
+          <div className="p-4 bg-emerald-600/10 dark:bg-emerald-500/10 rounded-2xl text-emerald-600 dark:text-emerald-400 hidden md:block">
+            <MapPinIcon className="h-8 w-8" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-2">
+              Our Real-World Impact
+            </h2>
+            <p className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+              Changing how we treat our environment while <span className="text-purple-600 dark:text-purple-400">growing local income.</span>
+            </p>
+          </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {stats.map((stat, i) => (
             <motion.div 
               key={i}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 25 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: i * 0.1 }}
+              transition={{ duration: 0.6, delay: i * 0.1 }}
               viewport={{ once: true }}
-              className="group relative p-8 rounded-[2.5rem] bg-white/70 dark:bg-[#120326]/60 border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 overflow-hidden backdrop-blur-md"
+              className="group relative p-6 sm:p-8 rounded-3xl bg-white/80 dark:bg-[#120326]/60 border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden backdrop-blur-md"
             >
-              {/* Card Glow Effect */}
-              <div className={`absolute -right-10 -top-10 h-32 w-32 blur-[80px] opacity-20 transition-opacity group-hover:opacity-40 ${stat.color === 'emerald' ? 'bg-emerald-500' : 'bg-purple-600'}`} />
+              {/* Decorative Corner Glow */}
+              <div className={`absolute -right-10 -top-10 h-32 w-32 blur-[60px] opacity-10 transition-opacity group-hover:opacity-20 ${stat.color === 'emerald' ? 'bg-emerald-500' : 'bg-purple-600'}`} />
 
-              <div className="relative z-10">
-                <div className={`inline-flex p-3 rounded-2xl mb-8 ${stat.color === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400'}`}>
-                  <stat.icon className="h-6 w-6" />
-                </div>
+              <div className="relative z-10 flex flex-col h-full justify-between">
+                <div>
+                  <div className={`inline-flex p-3 rounded-xl mb-6 ${stat.color === 'emerald' ? 'bg-emerald-100/70 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-purple-100/70 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400'}`}>
+                    <stat.icon className="h-6 w-6" />
+                  </div>
 
-                <div className="space-y-4">
-                  <h3 className="text-5xl font-bold tracking-tighter text-slate-900 dark:text-white flex items-baseline gap-1">
-                    <span className="text-xl font-sans font-light text-slate-400 dark:text-white/40">{stat.prefix}</span>
+                  <h3 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-baseline gap-0.5">
+                    {stat.prefix && <span className="text-lg sm:text-xl font-medium text-slate-400 dark:text-white/40 mr-0.5">{stat.prefix}</span>}
                     <Counter value={stat.value} suffix={stat.suffix} />
                   </h3>
-                  
-                  <div>
-                    <p className="text-[10px] uppercase font-black tracking-widest text-emerald-600 dark:text-emerald-400 mb-2">
-                      {stat.label}
-                    </p>
-                    <p className="text-sm text-slate-500 dark:text-purple-100/50 leading-relaxed font-light">
-                      {stat.description}
-                    </p>
-                  </div>
+                </div>
+                
+                <div className="mt-4">
+                  <p className="text-xs font-bold tracking-wide text-slate-800 dark:text-white mb-1.5">
+                    {stat.label}
+                  </p>
+                  <p className="text-sm text-slate-600 dark:text-purple-100/60 leading-relaxed font-normal">
+                    {stat.description}
+                  </p>
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* CTA Banner */}
+        {/* CTA Action Banner */}
         <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.98 }}
           whileInView={{ opacity: 1, scale: 1 }}
-          className="mt-16 relative overflow-hidden rounded-[2rem] bg-slate-900 dark:bg-[#1a0433] p-8 md:p-12 shadow-2xl"
+          viewport={{ once: true }}
+          className="mt-12 sm:mt-16 relative overflow-hidden rounded-3xl bg-slate-950 dark:bg-[#1a0433] p-8 md:p-10 shadow-xl"
         >
-          {/* Subtle noise and pattern for the CTA box */}
-          <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none" />
+          <div className="absolute inset-0 opacity-[0.02] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none" />
           
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="space-y-4 text-center md:text-left">
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+            <div className="space-y-2">
               <div className="flex items-center gap-2 justify-center md:justify-start">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Vision 2030 Aligned</span>
+                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Built For Community Action</span>
               </div>
-              <p className="text-xl md:text-2xl font-serif text-white max-w-xl leading-snug">
-                Building the <span className="italic text-emerald-400">digital heartbeat</span> of Kenya&apos;s circular economy.
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-white max-w-xl leading-snug">
+                Creating clean neighborhoods and sustainable paths to financial freedom.
               </p>
             </div>
             
-            <button className="group flex items-center gap-3 bg-white text-slate-900 px-8 py-4 rounded-2xl font-bold text-sm hover:bg-emerald-400 transition-all active:scale-95 shadow-xl">
-              <DocumentArrowDownIcon className="h-5 w-5 text-slate-400 group-hover:text-slate-900" />
-              Download Impact Report
+            <button className="group w-full md:w-auto flex items-center justify-center gap-2.5 bg-emerald-600 hover:bg-emerald-500 text-white dark:bg-white dark:text-slate-900 px-6 py-4 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-md">
+              <DocumentArrowDownIcon className="h-5 w-5 opacity-80" />
+              See Our Progress Report
             </button>
           </div>
         </motion.div>

@@ -23,7 +23,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 
-// --- TYPES ---
 type Material = {
   id: string;
   name: string;
@@ -45,78 +44,107 @@ export function Inventory() {
   const [editingItem, setEditingItem] = useState<Material | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  // Form Controlled Field States
+  const [formName, setFormName] = useState("");
+  const [formGrade, setFormGrade] = useState("");
+  const [formWeight, setFormWeight] = useState("");
+  const [formSupplier, setFormSupplier] = useState("");
+  const [formDriver, setFormDriver] = useState("");
+
   useEffect(() => {
     const syncData = async () => {
-      const response = await fetch('/api/admin/inventory');
-      const data = await response.json();
-      setItems(data);
+      try {
+        const response = await fetch('/api/admin/inventory');
+        if (response.ok) {
+          const data = await response.json();
+          setItems(data);
+        }
+      } catch (err) {
+        console.log("Using initial inventory fallbacks.");
+      }
     };
     syncData();
   }, []);
 
-  // --- HELPER: COMPUTE STATUS ---
+  // Update form inputs when an item is selected for editing
+  useEffect(() => {
+    if (editingItem) {
+      setFormName(editingItem.name);
+      setFormGrade(editingItem.grade);
+      setFormWeight(editingItem.weight.replace(/[^\d.-]/g, ''));
+      setFormSupplier(editingItem.supplier);
+      setFormDriver(editingItem.driver);
+    } else {
+      clearFormFields();
+    }
+  }, [editingItem]);
+
   const getStatus = (item: Material) => {
     const weightValue = parseFloat(item.weight.replace(/[^\d.-]/g, ''));
     if (item.driver && item.driver.trim() !== "") {
       return { 
-        label: "In-Transit", 
-        color: "text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-400/20 bg-blue-50 dark:bg-blue-400/10", 
-        glow: "shadow-sm dark:shadow-[0_0_15px_rgba(59,130,246,0.3)]", 
+        label: "In Transit", 
+        color: "text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/10", 
         icon: TruckIcon 
       };
     }
     if (weightValue > 10) {
       return { 
-        label: "Pending Review", 
-        color: "text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-400/20 bg-amber-50 dark:bg-amber-400/10", 
-        glow: "shadow-sm dark:shadow-[0_0_15px_rgba(245,158,11,0.3)]", 
+        label: "Needs Review", 
+        color: "text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10", 
         icon: ExclamationCircleIcon 
       };
     }
     return { 
-      label: "In-Stock", 
-      color: "text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-400/20 bg-emerald-50 dark:bg-emerald-400/10", 
-      glow: "shadow-sm dark:shadow-[0_0_15px_rgba(16,185,129,0.3)]", 
+      label: "In Stock", 
+      color: "text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10", 
       icon: CheckCircleIcon 
     };
   };
 
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const newItem: Material = {
-      id: (formData.get("id") as string) || `MAT-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-      name: formData.get("name") as string,
-      grade: formData.get("grade") as string,
-      weight: formData.get("weight") as string,
-      supplier: formData.get("supplier") as string,
-      driver: formData.get("driver") as string,
+
+    const formattedWeight = formWeight.endsWith('t') ? formWeight : `${formWeight}t`;
+    const updatedItem: Material = {
+      id: editingItem?.id || `MAT-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+      name: formName,
+      grade: formGrade,
+      weight: formattedWeight,
+      supplier: formSupplier,
+      driver: formDriver
     };
 
     const method = editingItem ? "PATCH" : "POST";
     const url = editingItem ? `/api/admin/inventory/${editingItem.id}` : "/api/admin/inventory";
 
-    const response = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newItem),
-    });
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedItem),
+      });
 
-    if (response.ok) {
-      // Refresh local state or re-fetch
+      if (response.ok) {
+        const freshRes = await fetch('/api/admin/inventory');
+        if (freshRes.ok) setItems(await freshRes.json());
+        closePanel();
+      } else {
+        throw new Error("Fallback local state updating");
+      }
+    } catch (err) {
+      // Local Array state backup mutation logic
+      if (editingItem) {
+        setItems(items.map(i => i.id === editingItem.id ? updatedItem : i));
+      } else {
+        setItems([updatedItem, ...items]);
+      }
       closePanel();
     }
-
-    // if (editingItem) {
-    //   setItems(items.map(i => i.id === editingItem.id ? newItem : i));
-    // } else {
-    //   setItems([newItem, ...items]);
-    // }
-    // closePanel();
   };
 
   const deleteItem = (id: string) => {
-    if (confirm("Permanently remove this material?")) {
+    if (confirm("Are you sure you want to completely remove this material load from tracking?")) {
       setItems(items.filter(i => i.id !== id));
     }
   };
@@ -131,69 +159,97 @@ export function Inventory() {
     setEditingItem(null);
   };
 
+  const clearFormFields = () => {
+    setFormName("");
+    setFormGrade("");
+    setFormWeight("");
+    setFormSupplier("");
+    setFormDriver("");
+  };
+
+  // Summary Metrics calculations
+  const totalVolume = useMemo(() => {
+    return items.reduce((sum, item) => sum + parseFloat(item.weight.replace(/[^\d.-]/g, '') || "0"), 0).toFixed(1);
+  }, [items]);
+
+  const activeDriversCount = useMemo(() => {
+    return items.filter(item => item.driver && item.driver.trim() !== "").length;
+  }, [items]);
+
   return (
     <div className={cn(
-        "min-h-screen transition-colors duration-500 font-sans selection:bg-emerald-500/30",
-        isDarkMode ? "bg-[#050505] text-white" : "bg-slate-50 text-slate-900"
+        "min-h-screen transition-colors duration-300 font-sans antialiased selection:bg-emerald-500/20",
+        isDarkMode ? "bg-slate-950 text-slate-100" : "bg-slate-50/60 text-slate-900"
     )}>
-      {/* Background Decor */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[120px] rounded-full" />
+      {/* Soft Background Accents */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-emerald-500/[0.04] dark:bg-emerald-500/[0.02] blur-3xl rounded-full" />
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-blue-500/[0.04] dark:bg-blue-500/[0.02] blur-3xl rounded-full" />
       </div>
 
+      {/* --- SLIDE DRAWER MANIFEST OVERLAY PANEL --- */}
       <AnimatePresence>
         {isPanelOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closePanel} className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60]" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closePanel} className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-[80]" />
             <motion.div 
               initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              transition={{ type: "tween", duration: 0.25 }}
               className={cn(
-                "fixed right-0 top-0 h-full w-full max-w-lg border-l z-[70] p-12 shadow-2xl overflow-y-auto",
-                isDarkMode ? "bg-[#0a0a0a] border-white/10" : "bg-white border-slate-200"
+                "fixed right-0 top-0 bottom-0 h-full w-full max-w-md border-l z-[90] p-6 sm:p-8 overflow-y-auto shadow-xl",
+                isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
               )}
             >
-              <div className="flex justify-between items-center mb-12">
+              <div className="flex justify-between items-center mb-8">
                 <div>
-                  <h2 className="text-3xl font-black uppercase italic tracking-tighter">Manifest Entry</h2>
-                  <p className="text-slate-500 dark:text-white/40 text-xs font-bold tracking-widest uppercase mt-1">Industrial Logistics Node v2.4</p>
+                  <h2 className="text-xl font-bold">{editingItem ? "Update Load Info" : "Register New Material Load"}</h2>
+                  <p className="text-xs text-slate-400 mt-1">Fill out cargo specifications below.</p>
                 </div>
-                <button onClick={closePanel} className="p-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-2xl transition-all">
-                    <XMarkIcon className="w-6 h-6" />
+                <button onClick={closePanel} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors">
+                  <XMarkIcon className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleSave} className="space-y-8">
-                <div className="space-y-4">
-                  <div className="group">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-white/30 mb-2 block group-focus-within:text-emerald-500 transition-colors">Core Information</label>
-                    <input name="name" placeholder="Material Name" defaultValue={editingItem?.name} required className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 font-bold outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-400 dark:placeholder:text-white/10" />
-                  </div>
-                  <input name="grade" placeholder="Material Grade" defaultValue={editingItem?.grade} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 font-bold outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-400 dark:placeholder:text-white/10" />
+              <form onSubmit={handleSave} className="space-y-5 text-sm">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Material Details</label>
+                  <input required value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Material Name (e.g. Cardboard Bales)" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-none focus:border-emerald-500" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Material Grade</label>
+                  <input value={formGrade} onChange={(e) => setFormGrade(e.target.value)} placeholder="Quality Status or Grade (e.g. Grade A Premium)" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-none focus:border-emerald-500" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-white/30">Net Weight (t)</label>
-                    <input name="weight" defaultValue={editingItem?.weight} placeholder="0.0t" className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 font-black text-xl outline-none focus:border-emerald-500/50 text-emerald-600 dark:text-emerald-400" />
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Weight (in Tons)</label>
+                    <input required type="number" step="0.1" value={formWeight} onChange={(e) => setFormWeight(e.target.value)} placeholder="e.g. 5.4" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-bold text-emerald-600 dark:text-emerald-400 outline-none focus:border-emerald-500" />
                   </div>
-                  <div className="flex items-end pb-3 text-[10px] font-bold text-slate-400 dark:text-white/20 uppercase italic">* Automated status triggers over 10.0t</div>
+                  <div className="flex items-center text-[11px] text-slate-400 leading-tight pt-5">
+                    * Weight above 10t auto-triggers verification alerts.
+                  </div>
                 </div>
 
-                <div className="space-y-4 pt-8 border-t border-slate-200 dark:border-white/5">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-white/30 flex items-center gap-2"><UserIcon className="w-3 h-3"/> Supplier Entity</label>
-                    <select name="supplier" defaultValue={editingItem?.supplier} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 font-bold outline-none appearance-none cursor-pointer hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
-                      <option value="" className="dark:bg-[#0a0a0a]">Select Supplier</option>
-                      <option value="Alpha Aggregators" className="dark:bg-[#0a0a0a]">Alpha Aggregators</option>
-                      <option value="Coastal Plastics Ltd" className="dark:bg-[#0a0a0a]">Coastal Plastics Ltd</option>
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Assigned Supplier</label>
+                    <select value={formSupplier} onChange={(e) => setFormSupplier(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-none cursor-pointer">
+                      <option value="">Choose Supplier</option>
+                      <option value="Alpha Aggregators">Alpha Aggregators</option>
+                      <option value="Coastal Plastics Ltd">Coastal Plastics Ltd</option>
+                      <option value="Eco-Metal Nairobi">Eco-Metal Nairobi</option>
                     </select>
                   </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Transit Driver (Optional)</label>
+                    <input value={formDriver} onChange={(e) => setFormDriver(e.target.value)} placeholder="Leave blank if item is stored in stock" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-none focus:border-emerald-500" />
+                  </div>
                 </div>
 
-                <button type="submit" className="w-full py-6 bg-emerald-600 text-white rounded-3xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-emerald-900/20 hover:bg-emerald-500 hover:scale-[1.02] active:scale-95 transition-all">
-                  Sync with Central Ledger
+                <button type="submit" className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold uppercase tracking-wider text-xs transition-all shadow-md mt-4">
+                  Save Material to Inventory
                 </button>
               </form>
             </motion.div>
@@ -201,143 +257,160 @@ export function Inventory() {
         )}
       </AnimatePresence>
 
-      <div className="max-w-7xl mx-auto space-y-12 p-6 md:p-12 relative z-10">
-        {/* --- HEADER --- */}
-        <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              Live Node: Nairobi-Central
+      <div className="max-w-7xl mx-auto space-y-8 p-4 sm:p-6 md:p-8 relative z-10">
+        
+        {/* --- MAIN INTERFACE HEADER --- */}
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
+              <ArchiveBoxIcon className="w-5 h-5" />
             </div>
-            <h1 className="text-6xl font-black italic tracking-tighter leading-none">
-                MATERIAL <br/>
-                <span className={cn(
-                    "text-transparent bg-clip-text bg-gradient-to-r",
-                    isDarkMode ? "from-white to-white/20" : "from-slate-900 to-slate-400"
-                )}>LOGISTICS.</span>
-            </h1>
+            <div>
+              <h1 className="text-xl font-extrabold tracking-tight">Material Inventory Ledger</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Track raw processing products stored on-site or incoming in-transit.</p>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-4">
-            <button 
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className="p-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
-            >
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2.5 hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200 dark:border-slate-800 rounded-xl transition-colors text-slate-500 dark:text-slate-400">
               {isDarkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
             </button>
-            <button className="flex items-center gap-3 px-6 py-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
-              <FunnelIcon className="w-4 h-4" /> Filter
-            </button>
-            <button onClick={() => openPanel()} className="flex items-center gap-3 px-8 py-4 bg-emerald-600 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 active:scale-95 transition-all shadow-lg">
-              <PlusIcon className="w-5 h-5 stroke-[3px]" /> Add Load
+            <button onClick={() => openPanel()} className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:opacity-90 rounded-xl text-xs font-bold transition-all shadow-xs">
+              <PlusIcon className="w-4 h-4 stroke-[2.5px]" /> Register Incoming Cargo
             </button>
           </div>
         </header>
 
-        {/* --- STATS BENTO --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* --- STATS BENTO SUMMARY CARDS --- */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: "Aggregate Volume", value: "27.5t", icon: ScaleIcon, color: "text-emerald-500", detail: "82% Load" },
-            { label: "Active Hauls", value: "03", icon: TruckIcon, color: "text-blue-500", detail: "In Transit" },
-            { label: "Quality Rating", value: "98.2%", icon: BeakerIcon, color: "text-purple-500", detail: "Passed" },
-            { label: "Node Latency", value: "14ms", icon: ArrowPathIcon, color: "text-amber-500", detail: "Synchronized" },
+            { label: "Total Recycled Weight", value: `${totalVolume}t`, icon: ScaleIcon, info: "Net on hand" },
+            { label: "Trucks En-Route", value: String(activeDriversCount).padStart(2, '0'), icon: TruckIcon, info: "In active dispatch" },
+            { label: "Quality Checks Passed", value: "98.2%", icon: BeakerIcon, info: "Nairobi Standard" },
+            { label: "Last System Backup", value: "Live", icon: ArrowPathIcon, info: "Synced seamlessly" },
           ].map((stat, i) => (
-            <div key={i} className={cn(
-                "p-8 border rounded-[2.5rem] relative overflow-hidden group transition-all",
-                isDarkMode ? "bg-white/5 border-white/10 hover:border-white/20" : "bg-white border-slate-200 hover:border-emerald-200 shadow-sm"
-            )}>
-              <stat.icon className="absolute -right-4 -bottom-4 w-32 h-32 opacity-[0.05] group-hover:scale-110 transition-transform duration-700" />
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-white/30 mb-6">{stat.label}</p>
-              <div className="flex items-end gap-2">
-                <span className="text-4xl font-black italic tracking-tighter leading-none">{stat.value}</span>
-                <span className={cn("text-[10px] font-bold uppercase mb-1", stat.color)}>{stat.detail}</span>
+            <div key={i} className="p-4 sm:p-5 border rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-xs">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide leading-none">{stat.label}</p>
+                <p className="text-2xl font-extrabold tracking-tight">{stat.value}</p>
+                <p className="text-[10px] text-slate-400 font-medium">{stat.info}</p>
               </div>
+              <stat.icon className="w-8 h-8 text-slate-300 dark:text-slate-700 stroke-[1.5px] hidden sm:block" />
             </div>
           ))}
         </div>
 
-        {/* --- TABLE AREA --- */}
-        <div className={cn(
-            "border rounded-[3rem] overflow-hidden backdrop-blur-sm",
-            isDarkMode ? "bg-white/[0.02] border-white/10" : "bg-white border-slate-200 shadow-xl"
-        )}>
-          <div className="p-8 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
-            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-slate-400 dark:text-white/30">Master Material Manifest</h3>
-            <div className="flex gap-4">
-              <button className="p-2 text-slate-300 dark:text-white/20 hover:text-emerald-500 transition-colors"><ArrowDownTrayIcon className="w-5 h-5"/></button>
+        {/* --- INVENTORY CENTRAL DIRECTORY AREA --- */}
+        <div className="border rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+          <div className="p-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Storage Log Data</span>
+            <div className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
+              <ClockIcon className="w-3.5 h-3.5" /> Updated just now
             </div>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          {/* Mobile Card Layout (Visible below md) */}
+          <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            {items.map((item) => {
+              const status = getStatus(item);
+              return (
+                <div key={item.id} className="p-4 space-y-3.5">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">{item.name}</h4>
+                      <p className="text-[11px] text-slate-400 font-mono">{item.id} • {item.grade}</p>
+                    </div>
+                    <span className={cn("inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border", status.color)}>
+                      <status.icon className="w-3 h-3" /> {status.label}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-white/[0.01] p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-medium">SUPPLIER</span>
+                      <span className="font-bold truncate block">{item.supplier || "Not assigned"}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-medium">DRIVER TRANSIT</span>
+                      <span className="font-bold truncate block text-slate-500">{item.driver || "In Warehouse Stored"}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block leading-none font-medium">CARGO WEIGHT</span>
+                      <span className="text-xl font-black text-slate-900 dark:text-white">{item.weight}</span>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button onClick={() => openPanel(item)} className="p-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-600 dark:text-slate-300">
+                        <PencilSquareIcon className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => deleteItem(item.id)} className="p-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-slate-800 rounded-lg text-red-600">
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Spreadsheet Table Layout (Visible on md and up) */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className={cn(
-                    "text-[9px] uppercase tracking-[0.25em] border-b",
-                    isDarkMode ? "text-white/20 border-white/5 bg-white/[0.01]" : "text-slate-400 border-slate-100 bg-slate-50/50"
-                )}>
-                  <th className="px-10 py-6 font-black">Material Identifier</th>
-                  <th className="px-10 py-6 font-black text-center">Protocol Status</th>
-                  <th className="px-10 py-6 font-black">Supply Chain</th>
-                  <th className="px-10 py-6 font-black text-right">Net Weight</th>
-                  <th className="px-10 py-6 font-black text-center">Operations</th>
+                <tr className="text-slate-400 bg-slate-50/50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider font-bold">
+                  <th className="p-4 pl-6">Material Description</th>
+                  <th className="p-4 text-center">Status</th>
+                  <th className="p-4">Source & Driver</th>
+                  <th className="p-4 text-right">Net Cargo Weight</th>
+                  <th className="p-4 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className={cn("divide-y", isDarkMode ? "divide-white/5" : "divide-slate-100")}>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
                 {items.map((item) => {
                   const status = getStatus(item);
                   return (
-                    <motion.tr layout key={item.id} className="group hover:bg-emerald-50/50 dark:hover:bg-white/[0.04] transition-all cursor-default">
-                      <td className="px-10 py-8">
-                        <div className="flex items-center gap-5">
-                          <div className="h-12 w-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 dark:text-white/20 group-hover:text-emerald-500 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-400/10 border border-transparent transition-all duration-500">
-                            <ArchiveBoxIcon className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <p className="font-black text-lg tracking-tight group-hover:translate-x-1 transition-transform">{item.name}</p>
-                            <p className="text-[10px] font-mono text-slate-400 dark:text-white/20 uppercase tracking-widest">{item.id} • {item.grade}</p>
-                          </div>
+                    <tr key={item.id} className="hover:bg-slate-50/40 dark:hover:bg-white/[0.01] transition-colors">
+                      <td className="p-4 pl-6">
+                        <div>
+                          <p className="font-bold text-sm text-slate-900 dark:text-white">{item.name}</p>
+                          <p className="text-[11px] font-mono text-slate-400 tracking-tight">{item.id} — Grade: {item.grade}</p>
                         </div>
                       </td>
-                      <td className="px-10 py-8 text-center">
-                        <span className={cn(
-                          "inline-flex items-center gap-2 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border transition-all duration-500",
-                          status.color,
-                          status.glow
-                        )}>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <span className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border", status.color)}>
                           <status.icon className="w-3.5 h-3.5" />
                           {status.label}
                         </span>
                       </td>
-                      <td className="px-10 py-8">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-3 text-[10px] font-bold text-slate-500 dark:text-white/50 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-                            <UserIcon className="w-3.5 h-3.5 text-emerald-500" /> {item.supplier || "ORPHANED_LOAD"}
-                          </div>
-                          <div className="flex items-center gap-3 text-[10px] font-bold text-slate-300 dark:text-white/20 uppercase">
-                            <TruckIcon className="w-3.5 h-3.5 text-blue-500" /> {item.driver || "PENDING_DISPATCH"}
-                          </div>
+                      <td className="p-4">
+                        <div className="space-y-0.5">
+                          <p className="text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                            <UserIcon className="w-3.5 h-3.5 text-slate-400" /> {item.supplier || "Unknown Supplier"}
+                          </p>
+                          {item.driver && (
+                            <p className="text-slate-400 text-[11px] flex items-center gap-1">
+                              <TruckIcon className="w-3.5 h-3.5 text-slate-400" /> Driver: {item.driver}
+                            </p>
+                          )}
                         </div>
                       </td>
-                      <td className="px-10 py-8 text-right">
-                        <div className="flex flex-col items-end">
-                          <span className="text-2xl font-black italic tracking-tighter group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{item.weight}</span>
-                          <span className="text-[8px] font-bold text-slate-300 dark:text-white/10 uppercase tracking-widest leading-none">Metric Tons</span>
-                        </div>
+                      <td className="p-4 text-right">
+                        <span className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{item.weight}</span>
                       </td>
-                      <td className="px-10 py-8">
-                        <div className="flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                          <button onClick={() => openPanel(item)} className="h-10 w-10 bg-slate-100 dark:bg-white/5 hover:bg-emerald-600 hover:text-white rounded-xl flex items-center justify-center transition-all border border-slate-200 dark:border-white/5">
+                      <td className="p-4">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button onClick={() => openPanel(item)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-slate-800 rounded-xl transition-all text-slate-500">
                             <PencilSquareIcon className="w-4 h-4" />
                           </button>
-                          <button onClick={() => deleteItem(item.id)} className="h-10 w-10 bg-slate-100 dark:bg-white/5 hover:bg-red-500 hover:text-white rounded-xl flex items-center justify-center transition-all border border-slate-200 dark:border-white/5">
+                          <button onClick={() => deleteItem(item.id)} className="p-2 hover:bg-red-50 text-red-600 border border-transparent hover:border-red-100 dark:hover:border-red-950/30 rounded-xl transition-all">
                             <TrashIcon className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
-                    </motion.tr>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -345,29 +418,28 @@ export function Inventory() {
           </div>
         </div>
 
-        {/* --- FOOTER UTILIZATION --- */}
-        <div className="p-1 gap-4 flex flex-col md:flex-row">
-            <div className="flex-1 p-8 bg-emerald-600 rounded-[2.5rem] flex items-center justify-between group overflow-hidden relative">
-                <div className="z-10">
-                    <h4 className="text-2xl font-black uppercase italic leading-none mb-1 text-white dark:text-black">Hub Capacity</h4>
-                    <p className="text-white/60 dark:text-black/60 text-[10px] font-bold uppercase tracking-widest leading-none">Aggregated Industrial Flow</p>
-                </div>
-                <div className="text-5xl font-black italic tracking-tighter text-white dark:text-black z-10">78.5%</div>
-                <div className="absolute top-0 left-0 bottom-0 bg-white/10 w-[78.5%] group-hover:w-[82%] transition-all duration-1000 ease-out" />
+        {/* --- CAPACITY UTILITY LOWER DOCK --- */}
+        <div className="p-4 bg-slate-900 dark:bg-slate-950 text-white rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="p-2 bg-white/10 rounded-xl">
+              <ScaleIcon className="w-5 h-5 text-emerald-400" />
             </div>
-            <div className={cn(
-                "p-8 border rounded-[2.5rem] flex items-center gap-4 transition-all",
-                isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200 shadow-sm"
-            )}>
-                <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-                    <ClockIcon className="w-6 h-6 text-emerald-500"/>
-                </div>
-                <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/30">Last Sync</p>
-                    <p className="font-bold text-sm">MAR 20, 2026 - 18:52</p>
-                </div>
+            <div className="w-full sm:w-64">
+              <div className="flex justify-between text-xs font-bold mb-1">
+                <span>Warehouse Capacity Used</span>
+                <span className="text-emerald-400">78.5%</span>
+              </div>
+              <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                <div className="bg-emerald-500 h-full transition-all duration-500" style={{ width: "78.5%" }} />
+              </div>
             </div>
+          </div>
+          
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-white/5 px-3 py-1.5 rounded-xl self-end sm:self-auto">
+            Nairobi-Central Station Hub Node
+          </div>
         </div>
+
       </div>
     </div>
   );

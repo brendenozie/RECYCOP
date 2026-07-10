@@ -11,13 +11,13 @@ import {
 import { cn } from "@/lib/utils";
 import { useRef } from "react";
 
-// Stylized topological nodes for Nairobi
+// Stylized tracking map nodes for Nairobi neighborhoods
 const nodes = [
-  { id: 'agg1', x: 25, y: 35, type: 'aggregation', label: 'Westlands Collector Node' },
-  { id: 'agg2', x: 20, y: 70, type: 'aggregation', label: 'Kibera Cooperative Unit' },
-  { id: 'agg3', x: 45, y: 25, type: 'aggregation', label: 'Kasaranai aggregation' },
-  { id: 'hub1', x: 50, y: 55, type: 'hub', label: 'Central Nairobi Processing Hub', phase: 3 },
-  { id: 'export', x: 80, y: 65, type: 'gateway', label: 'Jomo Kenyatta Int’l Airport (JKIA) Gateway', phase: 5 },
+  { id: 'agg1', x: 25, y: 30, type: 'aggregation', label: 'Westlands Drop-off Site' },
+  { id: 'agg2', x: 20, y: 70, type: 'aggregation', label: 'Kibera Community Center' },
+  { id: 'agg3', x: 45, y: 20, type: 'aggregation', label: 'Kasarani Group Point' },
+  { id: 'hub1', x: 50, y: 55, type: 'hub', label: 'Central Nairobi Processing Center' },
+  { id: 'export', x: 80, y: 65, type: 'gateway', label: 'Main Manufacturing Gateway' },
 ];
 
 const paths = [
@@ -28,10 +28,10 @@ const paths = [
 ];
 
 const liveData = [
-  { label: "Active Collectors", value: "1,240", icon: MapPinIcon, color: "emerald" },
-  { label: "Material in Transit", value: "45.2 Tonnes", icon: TruckIcon, color: "purple" },
-  { label: "Processed Inventory", value: "112.8 Tonnes", icon: ChartBarIcon, color: "emerald" },
-  { label: "Export Ready (PET)", value: "88%", icon: GlobeAltIcon, color: "purple" },
+  { label: "Active Group Members", value: "1,240", icon: MapPinIcon, color: "emerald" },
+  { label: "Materials On the Move", value: "45.2 Tonnes", icon: TruckIcon, color: "purple" },
+  { label: "Processed & Ready", value: "112.8 Tonnes", icon: ChartBarIcon, color: "emerald" },
+  { label: "Shipped to Factories", value: "88%", icon: GlobeAltIcon, color: "purple" },
 ];
 
 function Node({ x, y, type, label }: { x: number; y: number; type: string; label: string }) {
@@ -43,40 +43,47 @@ function Node({ x, y, type, label }: { x: number; y: number; type: string; label
     <motion.div
       initial={{ scale: 0, opacity: 0 }}
       whileInView={{ scale: 1, opacity: 1 }}
+      viewport={{ once: true }}
       className="absolute group"
       style={{ left: `${x}%`, top: `${y}%` }}
     >
       <div className={cn(
-        "rounded-full border shadow-lg flex items-center justify-center -translate-x-1/2 -translate-y-1/2 transition-transform duration-500 group-hover:scale-110",
-        isAggregation && "h-4 w-4 bg-slate-900 dark:bg-slate-700 border-slate-700 dark:border-slate-500",
+        "rounded-full border shadow-md flex items-center justify-center -translate-x-1/2 -translate-y-1/2 transition-transform duration-300 group-hover:scale-110 cursor-pointer",
+        isAggregation && "h-5 w-5 bg-slate-900 dark:bg-slate-700 border-slate-700 dark:border-slate-500",
         isHub && "h-12 w-12 bg-white dark:bg-[#120326] border-emerald-500 dark:border-emerald-500/50 p-2",
-        isGateway && "h-16 w-16 bg-white dark:bg-[#1a0433] border-purple-500 dark:border-purple-500/50 p-3"
+        isGateway && "h-14 w-14 bg-white dark:bg-[#1a0433] border-purple-500 dark:border-purple-500/50 p-3"
       )}>
-        {isAggregation && <MapPinIcon className="h-2 w-2 text-emerald-500" />}
-        {isHub && <div className="h-6 w-6 rounded-lg bg-emerald-500/10 text-emerald-400 p-1 flex items-center justify-center"> <ArrowsRightLeftIcon className="h-4 w-4" /> </div>}
-        {isGateway && <div className="h-full w-full rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center p-2"><GlobeAltIcon className="h-8 w-8" /></div>}
-      
+        {isAggregation && <MapPinIcon className="h-3 w-3 text-emerald-400" />}
+        {isHub && (
+          <div className="h-7 w-7 rounded-lg bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-1 flex items-center justify-center">
+            <ArrowsRightLeftIcon className="h-4 w-4" />
+          </div>
+        )}
+        {isGateway && (
+          <div className="h-full w-full rounded-xl bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center p-1.5">
+            <GlobeAltIcon className="h-6 w-6" />
+          </div>
+        )}
       </div>
       
-      {/* Dynamic Tooltip on Hover */}
-      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 whitespace-nowrap rounded-lg bg-black/80 dark:bg-white p-2 px-3 text-[10px] text-white dark:text-black font-bold opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          {label}
+      {/* Interactive Label Tooltip */}
+      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap rounded-lg bg-slate-900 dark:bg-white px-2.5 py-1.5 text-[10px] text-white dark:text-slate-900 font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30">
+        {label}
       </div>
     </motion.div>
   );
 }
 
 function CircuitPath({ fromX, fromY, toX, toY, delay }: { fromX: number; fromY: number; toX: number; toY: number; delay: number }) {
-  // SVG viewbox is 100x100 for percentage coordinate mapping
   return (
     <motion.path
       initial={{ pathLength: 0 }}
       whileInView={{ pathLength: 1 }}
-      viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 1.5, delay: delay, ease: [0.22, 1, 0.36, 1] }}
+      viewport={{ once: true }}
+      transition={{ duration: 1.2, delay: delay, ease: "easeInOut" }}
       d={`M ${fromX} ${fromY} L ${toX} ${toY}`}
-      className="stroke-emerald-600/30 dark:stroke-emerald-400/30 hover:stroke-emerald-400 transition-colors"
-      strokeWidth="0.5"
+      className="stroke-emerald-500/40 dark:stroke-emerald-400/30 transition-colors"
+      strokeWidth="0.75"
       fill="none"
     />
   );
@@ -86,71 +93,76 @@ export function ProcessTimeline() {
   const mapRef = useRef<HTMLDivElement>(null);
 
   return (
-    <section ref={mapRef} className="relative py-32 bg-white dark:bg-[#0a0118] transition-colors duration-500 overflow-hidden">
+    <section ref={mapRef} className="relative py-16 sm:py-24 md:py-32 bg-white dark:bg-[#0a0118] transition-colors duration-500 overflow-hidden">
       
-      {/* --- Section Header (Serif Style) --- */}
-      <div className="container mx-auto px-6 mb-24 relative z-10 text-center lg:text-left">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-[0.2em] text-[10px] mb-6"
-          >
-            <MapPinIcon className="h-4 w-4" />
-            <span>Operational Visualization</span>
-          </motion.div>
-          <h2 className="font-serif text-5xl md:text-7xl text-slate-900 dark:text-white leading-[1.1] max-w-4xl mx-auto lg:mx-0">
-            Nairobi <span className="italic text-emerald-600 dark:text-emerald-400">Logistics Hub</span> &amp; Market Gateway.
-          </h2>
+      {/* Section Header */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-24 relative z-10 text-center lg:text-left">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-wide text-[10px] mb-4"
+        >
+          <MapPinIcon className="h-4 w-4" />
+          <span>Real-Time Tracking Map</span>
+        </motion.div>
+        <h2 className="font-sans font-extrabold text-3xl sm:text-5xl md:text-6xl text-slate-900 dark:text-white tracking-tight leading-[1.15] max-w-4xl mx-auto lg:mx-0">
+          See How Recycled Materials <br className="hidden sm:inline" />
+          Move Through Our <span className="text-emerald-600 dark:text-emerald-400">Local Network.</span>
+        </h2>
       </div>
 
-      {/* --- THE MAIN VISUALIZATION HUB --- */}
-      <div className="container mx-auto px-6 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+      {/* Main Grid View */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
         
-        {/* LEFT: Live Data Feed (Glass Cards) */}
-        <div className="lg:col-span-3 space-y-4">
-          <div className="max-w-xs mb-8">
-            <h3 className="text-xl font-serif text-slate-900 dark:text-white mb-2">Live Node Status</h3>
-            <p className="text-sm text-slate-500 dark:text-purple-100/60 font-light leading-relaxed">
-                RecycOp’s localized intelligence data, mapped to regional operational flows.
+        {/* LEFT: Live Counters */}
+        <div className="lg:col-span-4 order-2 lg:order-1 space-y-4">
+          <div className="text-center lg:text-left mb-6 lg:mb-8 max-w-sm mx-auto lg:mx-0">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Today&apos;s Activity Feed</h3>
+            <p className="text-sm text-slate-600 dark:text-purple-100/60 font-normal leading-relaxed mt-1">
+              Live collection stats updated from our smart collection apps and local weigh scales.
             </p>
           </div>
           
-          {liveData.map((data, i) => (
-            <motion.div 
-              key={i}
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="p-5 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-md flex items-center gap-4 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-            >
-              <div className={cn(
-                "p-3 rounded-2xl",
-                data.color === 'emerald' ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400"
-              )}>
-                <data.icon className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/30 mb-1">
-                  {data.label}
-                </p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">
-                  {data.value}
-                </p>
-              </div>
-            </motion.div>
-          ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+            {liveData.map((data, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                viewport={{ once: true }}
+                className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 backdrop-blur-md flex items-center gap-4 shadow-sm"
+              >
+                <div className={cn(
+                  "p-3 rounded-xl flex-shrink-0",
+                  data.color === 'emerald' ? "bg-emerald-100/70 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-purple-100/70 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400"
+                )}>
+                  <data.icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-white/40 mb-0.5">
+                    {data.label}
+                  </p>
+                  <p className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    {data.value}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
 
-        {/* RIGHT: The Topological Route Map (Nairobi Centered) */}
-        <div className="lg:col-span-9 relative">
-          <div className="aspect-[16/10] w-full rounded-[3rem] bg-slate-100 dark:bg-[#05010d] p-3 border-2 border-slate-200 dark:border-white/10 shadow-inner overflow-hidden relative">
+        {/* RIGHT: Visual Map System */}
+        <div className="lg:col-span-8 order-1 lg:order-2 relative w-full">
+          <div className="aspect-[16/10] hidden sm:block w-full rounded-3xl bg-slate-100 dark:bg-[#05010d] p-3 border border-slate-200 dark:border-white/10 shadow-inner overflow-hidden relative">
               
-              {/* The Map "blueprint" Grid */}
-              <div className="absolute inset-0 z-0 opacity-[0.1] dark:opacity-[0.2]">
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:50px_50px]" />
+              {/* Map Layout Blueprint Grid */}
+              <div className="absolute inset-0 z-0 opacity-[0.08] dark:opacity-[0.15]">
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:40px_40px]" />
               </div>
 
-              {/* Central Map SVG for Routes */}
+              {/* Connecting Paths */}
               <svg width="100%" height="100%" viewBox="0 0 100 100" className="absolute inset-0 z-10 pointer-events-none">
                 {paths.map((path, i) => {
                   const fromNode = nodes.find(n => n.id === path.from);
@@ -160,16 +172,28 @@ export function ProcessTimeline() {
                 })}
               </svg>
 
-              {/* Operational Nodes */}
+              {/* Operational Interactive Nodes */}
               <div className="absolute inset-0 z-20">
                 {nodes.map((node) => <Node key={node.id} {...node} />)}
               </div>
               
-              {/* Map Footer Label */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-slate-900 dark:bg-[#1a0433] px-6 py-2.5 border border-white/10 flex items-center gap-3 shadow-xl">
-                  <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">RecycOp Local Stream [NBO Node 112]</span>
+              {/* Map Floating Footnote */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-slate-950 dark:bg-[#1a0433] px-5 py-2 border border-white/10 flex items-center gap-2.5 shadow-md">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-white/90">Hover on markers to explore centers</span>
               </div>
+          </div>
+
+          {/* Fallback Clean View List for Small Phone Screens */}
+          <div className="block sm:hidden rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-5 space-y-3">
+            <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">Our Connected Locations</h4>
+            <ul className="space-y-2 text-sm text-slate-800 dark:text-purple-100/80 font-medium">
+              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-slate-400" /> Westlands Collection Site</li>
+              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-slate-400" /> Kibera Cooperative Unit</li>
+              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-slate-400" /> Kasarani Collection Point</li>
+              <li className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Central Nairobi Processing Center</li>
+              <li className="flex items-center gap-2 text-purple-600 dark:text-purple-400"><span className="h-1.5 w-1.5 rounded-full bg-purple-500" /> Main Factory Gateway</li>
+            </ul>
           </div>
         </div>
 
