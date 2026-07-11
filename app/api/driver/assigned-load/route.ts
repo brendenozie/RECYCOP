@@ -44,17 +44,17 @@ export async function GET(request: NextRequest) {
     const inventory = await db
       .collection("inventory")
       .find({
-        // driverId: new ObjectId(driverId),
-        // status: {
-        //   $in: [
-        //     "Pending",
-        //     "Loaded",
-        //     "In Transit",
-        //     "Delivered",
-        //     "Canceled",
-        //     "Active",
-        //   ],
-        // },
+        driverId: new ObjectId(driverId),
+        status: {
+          $in: [
+            "Pending",
+            "Loaded",
+            "In Transit",
+            "Delivered",
+            "Canceled",
+            "Active",
+          ],
+        },
       })
       .sort({
         timestamp: -1,

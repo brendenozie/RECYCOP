@@ -3,6 +3,49 @@ import { getDatabase } from "@/lib/mongodb"; // Adjust your import path if neede
 import { verifyToken, processBatchCompletion } from "@/lib/auth"; // Wherever your auth file resides
 import { ObjectId } from "mongodb";
 
+// --- GET: Fetch All Material Manifests ---
+export async function GET(request: Request) {
+  try {
+    // 1. Authenticate via Bearer Token or Cookie
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.substring(7)
+      : null;
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Authentication token missing" },
+        { status: 401 },
+      );
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded || decoded.role !== "supplier") {
+      return NextResponse.json(
+        { error: "Unauthorized access: Suppliers only" },
+        { status: 403 },
+      );
+    }
+
+    const db = await getDatabase();
+    // Fetch items sorted by newest first
+    const items = await db
+      .collection("inventory")
+      .find({
+        supplierId: new ObjectId(decoded.userId),
+      })
+      .sort({ timestamp: -1 })
+      .toArray();
+
+    return NextResponse.json(items);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to fetch inventory matrix logs" },
+      { status: 500 },
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     // 1. Authenticate via Bearer Token or Cookie

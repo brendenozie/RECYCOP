@@ -1,9 +1,33 @@
+import { verifyToken } from "@/lib/auth";
 import { getDatabase } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const db = await getDatabase();
   const body = await request.json(); // { supplierId, batchIds, hub, totalWeight }
+
+    // 1. Authenticate via Bearer Token or Cookie
+      const authHeader = request.headers.get("authorization");
+      const token = authHeader?.startsWith("Bearer ")
+        ? authHeader.substring(7)
+        : null;
+  
+      if (!token) {
+        return NextResponse.json(
+          { error: "Authentication token missing" },
+          { status: 401 },
+        );
+      }
+  
+      const decoded = verifyToken(token);
+      if (!decoded || decoded.role !== "supplier") {
+        return NextResponse.json(
+          { error: "Unauthorized access: Suppliers only" },
+          { status: 403 },
+        );
+      }
+  
 
   const session = (
     await (
@@ -17,6 +41,7 @@ export async function POST(request: Request) {
       await db.collection("pickup_requests").insertOne(
         {
           ...body,
+          supplierId: new ObjectId(decoded.userId),
           status: "Requested",
           requestedAt: new Date(),
           priority: body.totalWeight > 2000 ? "High" : "Normal",

@@ -9,6 +9,7 @@ import {
   ArrowPathIcon
 } from "@heroicons/react/24/outline";
 import { toast } from "sonner";
+import { useAuth } from "@/components/auth-context";
 
 // Explicit structure pulled from your feedstock architecture matrix
 type FeedstockOption = {
@@ -24,11 +25,15 @@ type SystemUser = {
   name: string;
 };
 
-export function SupplierLedgerForm({ userToken }: { userToken: string }) {
+export function SupplierLedgerForm() {
+  
+  const { user, loading: authLoading } = useAuth();
+
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [drivers, setDrivers] = useState<SystemUser[]>([]);
   const [suppliers, setSuppliers] = useState<SystemUser[]>([]);
   const [feedstockStreams, setFeedstockStreams] = useState<FeedstockOption[]>([]);
+  const [loading, setLoading] = useState(true);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingStreams, setIsLoadingStreams] = useState(false);
@@ -59,17 +64,28 @@ export function SupplierLedgerForm({ userToken }: { userToken: string }) {
     async function initializeFormContexts() {
       if (!isPanelOpen) return;
       setIsLoadingStreams(true);
+
+      // Wait until global auth loading finishes and ensure a valid user session exists
+      if (authLoading || !user) return;
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error("No authorization token discovered in localStorage.");
+        setLoading(false);
+        return;
+      }
+
       
       try {
         const [driversRes, feedstockRes, suppliersRes] = await Promise.all([
           fetch("/api/admin/users?role=driver", {
-            headers: { Authorization: `Bearer ${userToken}` }
+            headers: { Authorization: `Bearer ${token}` }
           }),
           fetch("/api/admin/feedstock", {
-            headers: { Authorization: `Bearer ${userToken}` }
+            headers: { Authorization: `Bearer ${token}` }
           }),
           fetch("/api/admin/users?role=supplier", {
-            headers: { Authorization: `Bearer ${userToken}` }
+            headers: { Authorization: `Bearer ${token}` }
           })
         ]);
 
@@ -89,11 +105,12 @@ export function SupplierLedgerForm({ userToken }: { userToken: string }) {
         toast.error("Failed to fetch operational parameters.");
       } finally {
         setIsLoadingStreams(false);
+        setLoading(false);
       }
     }
 
     initializeFormContexts();
-  }, [isPanelOpen, userToken]);
+  }, [user, authLoading]);
 
   // When a user selects a dynamic stream, reset the grade choice to force explicit selection
   const handleStreamChange = (streamName: string) => {
@@ -104,6 +121,17 @@ export function SupplierLedgerForm({ userToken }: { userToken: string }) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    // Wait until global auth loading finishes and ensure a valid user session exists
+      if (authLoading || !user) return;
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error("No authorization token discovered in localStorage.");
+        setLoading(false);
+        return;
+      }
+
 
     // Format parameter to match your standard architecture backend formatting (e.g., "12.4t")
     const formattedWeight = `${formWeight.replace(/[^\d.-]/g, "")}t`;
@@ -121,7 +149,7 @@ export function SupplierLedgerForm({ userToken }: { userToken: string }) {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${userToken}`
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(payload),
       });

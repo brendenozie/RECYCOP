@@ -27,6 +27,7 @@ export default function SupplierDashboard({ userToken }: { userToken: string }) 
     { id: "finance", label: "Earnings", icon: CurrencyDollarIcon },
     { id: "impact", label: "Impact", icon: ChartBarIcon },
   ];
+  
 
   return (
     <div className="flex min-h-screen bg-[#fafafa] dark:bg-[#05010d] text-slate-900 dark:text-white font-sans antialiased overflow-hidden">
@@ -190,7 +191,7 @@ export default function SupplierDashboard({ userToken }: { userToken: string }) 
                 */}
                 {activeTab === "overview" && <SupplierOverview userToken={userToken} />}
                 {activeTab === "impact" && <MyImpact userToken={userToken} />}
-                {activeTab === "batches" && <MyBatches userToken={userToken} />}
+                {activeTab === "batches" && <MyBatches />}
                 {activeTab === "pickup" && <RequestPickup userToken={userToken} />}
                 {activeTab === "finance" && <FinancePortal userToken={userToken} />}
               </motion.div>

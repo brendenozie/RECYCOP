@@ -1,10 +1,34 @@
+import { verifyToken } from "@/lib/auth";
 import { getDatabase } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   const db = await getDatabase();
   const { searchParams } = new URL(request.url);
-  const supplierId = searchParams.get("supplierId");
+  // const supplierId = searchParams.get("supplierId");
+
+    // 1. Authenticate via Bearer Token or Cookie
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.substring(7)
+      : null;
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Authentication token missing" },
+        { status: 401 },
+      );
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded || decoded.role !== "supplier") {
+      return NextResponse.json(
+        { error: "Unauthorized access: Suppliers only" },
+        { status: 403 },
+      );
+    }
+  
 
   // 1. Current Market Rates (Mocked or from a 'rates' collection)
   const rates: Record<string, number> = {
@@ -16,7 +40,8 @@ export async function GET(request: Request) {
   // 2. Calculate "Pending" value from batches not yet paid
   const pendingBatches = await db
     .collection("batches")
-    .find({ supplierId, status: { $in: ["Stored", "In-Transit"] } })
+    .find({ supplierId: new ObjectId(decoded.userId),
+       status: { $in: ["Stored", "In-Transit"] } })
     .toArray();
 
   const estimatedValue = pendingBatches.reduce((acc, batch) => {
@@ -24,10 +49,10 @@ export async function GET(request: Request) {
   }, 0);
 
   // 3. Fetch Wallet Balance & History
-  const wallet = await db.collection("wallets").findOne({ supplierId });
+  const wallet = await db.collection("wallets").findOne({ supplierId: new ObjectId(decoded.userId) });
   const history = await db
     .collection("transactions")
-    .find({ supplierId })
+    .find({ supplierId: new ObjectId(decoded.userId) })
     .sort({ date: -1 })
     .limit(5)
     .toArray();

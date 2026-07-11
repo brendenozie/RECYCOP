@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { SupplierLedgerForm } from "./SupplierLedgerForm";
+import { useAuth } from "@/components/auth-context";
 
 type InventoryBatch = {
   _id: string;
@@ -21,17 +22,29 @@ type InventoryBatch = {
   status: string;
 };
 
-export function MyBatches({ userToken }: { userToken: string }) {
+export function MyBatches() {
+  const { user, loading: authLoading } = useAuth();
+
   const [batches, setBatches] = useState<InventoryBatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     async function syncWarehouseStock() {
+      // Wait until global auth loading finishes and ensure a valid user session exists
+      if (authLoading || !user) return;
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error("No authorization token discovered in localStorage.");
+        setLoading(false);
+        return;
+      }
+
       try {
         const res = await fetch("/api/supplier/inventory", {
           headers: {
-            "Authorization": `Bearer ${userToken}`,
+            "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json"
           }
         });
@@ -48,7 +61,9 @@ export function MyBatches({ userToken }: { userToken: string }) {
     }
 
     syncWarehouseStock();
-  }, [userToken]);
+  }, [user, authLoading]);
+
+  if (authLoading || loading) return <div>Syncing warehouse records...</div>;
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6">
@@ -99,7 +114,7 @@ export function MyBatches({ userToken }: { userToken: string }) {
               className="overflow-hidden border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/20"
             >
               <div className="p-6">
-                <SupplierLedgerForm userToken={userToken} />
+                <SupplierLedgerForm  />
               </div>
             </motion.div>
           )}

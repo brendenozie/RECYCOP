@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@/components/auth-context";
 import { cn } from "@/lib/utils";
 import { 
   ArchiveBoxIcon, 
@@ -40,7 +41,10 @@ const menuItems = [
   { id: "history", name: "History", icon: ArchiveBoxIcon },
 ];
 
-export default function DriverMobileDashboard({ userToken }: { userToken: string }) {
+export default function DriverMobileDashboard() {
+  
+    const { user, loading: authLoading } = useAuth();
+    
   const [activeTab, setActiveTab] = useState("loads"); 
   const [loads, setLoads] = useState<InventoryLoad[]>([]);
   const [selectedLoad, setSelectedLoad] = useState<InventoryLoad | null>(null);
@@ -53,11 +57,21 @@ export default function DriverMobileDashboard({ userToken }: { userToken: string
   // 1. Fetch Assigned Loads List
   useEffect(() => {
     async function fetchAssignedLoads() {
+       // Wait until global auth loading finishes and ensure a valid user session exists
+      if (authLoading || !user) return;
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error("No authorization token discovered in localStorage.");
+        setLoading(false);
+        return;
+      }
+
       try {
         // Updated to fetch a list of loads assigned to this driver
         const res = await fetch("/api/driver/assigned-load", {
           headers: {
-            "Authorization": `Bearer ${userToken}`,
+            "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json"
           }
         });
@@ -78,7 +92,7 @@ export default function DriverMobileDashboard({ userToken }: { userToken: string
       }
     }
     fetchAssignedLoads();
-  }, [userToken]);
+  }, [user, authLoading]);
 
   // 2. Handle Status Transitions for the specific load
   const handleStatusUpdate = async (newStatus: InventoryLoad["status"]) => {
@@ -96,12 +110,23 @@ export default function DriverMobileDashboard({ userToken }: { userToken: string
       toast.success(`Status Updated: ${newStatus}`);
     }
 
+    // Wait until global auth loading finishes and ensure a valid user session exists
+    if (authLoading || !user) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error("No authorization token discovered in localStorage.");
+      setLoading(false);
+      return;
+    }
+
+
     try {
       await fetch("/api/driver/update-load-status", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${userToken}`
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ 
           loadId: selectedLoad._id, 

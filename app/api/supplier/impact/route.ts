@@ -1,17 +1,41 @@
+import { verifyToken } from "@/lib/auth";
 import { getDatabase } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
     const db = await getDatabase();
     const { searchParams } = new URL(request.url);
-    const supplierId = searchParams.get("supplierId");
+    // const supplierId = searchParams.get("supplierId");
+
+      // 1. Authenticate via Bearer Token or Cookie
+        const authHeader = request.headers.get("authorization");
+        const token = authHeader?.startsWith("Bearer ")
+          ? authHeader.substring(7)
+          : null;
+    
+        if (!token) {
+          return NextResponse.json(
+            { error: "Authentication token missing" },
+            { status: 401 },
+          );
+        }
+    
+        const decoded = verifyToken(token);
+        if (!decoded || decoded.role !== "supplier") {
+          return NextResponse.json(
+            { error: "Unauthorized access: Suppliers only" },
+            { status: 403 },
+          );
+        }
+    
 
     // Aggregate verified weight for this supplier
     const stats = await db
       .collection("manifests")
       .aggregate([
-        { $unmatch: { supplierId: supplierId, status: "Completed" } },
+        { $unmatch: { supplierId: new ObjectId(decoded.userId), status: "Completed" } },
         { $group: { _id: null, totalWeight: { $sum: "$verifiedWeight" } } },
       ])
       .toArray();

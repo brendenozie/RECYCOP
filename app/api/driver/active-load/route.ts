@@ -1,17 +1,37 @@
+import { verifyToken } from "@/lib/auth";
 import { getDatabase } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
     // 1. Extract Driver ID securely (Header first, fallback to Query Param)
-    const authHeader = request.headers.get("authorization");
-    const userToken = authHeader?.split(" ")[1];
+    // 1. Authenticate via Bearer Token or Cookie
+      const authHeader = request.headers.get("authorization");
+      const token = authHeader?.startsWith("Bearer ")
+        ? authHeader.substring(7)
+        : null;
+  
+      if (!token) {
+        return NextResponse.json(
+          { error: "Authentication token missing" },
+          { status: 401 },
+        );
+      }
+  
+      const decoded = verifyToken(token);
+      if (!decoded || decoded.role !== "supplier") {
+        return NextResponse.json(
+          { error: "Unauthorized access: Suppliers only" },
+          { status: 403 },
+        );
+      }    
 
     const { searchParams } = new URL(request.url);
     const queryDriverId = searchParams.get("driverId");
 
     // Replace with your actual token decoding logic in production
-    const driverId = userToken || queryDriverId;
+    const driverId = decoded?.userId || queryDriverId;
 
     if (!driverId) {
       return NextResponse.json(
@@ -26,7 +46,7 @@ export async function GET(request: Request) {
     const activeLoad = await db
       .collection("inventory")
       .findOne(
-        { driver: driverId, status: "Active" },
+        { driverId: new ObjectId(driverId), status: "Active" },
         { sort: { timestamp: -1 } },
       );
 
