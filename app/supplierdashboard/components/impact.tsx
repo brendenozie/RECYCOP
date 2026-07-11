@@ -18,7 +18,7 @@ const sustainabilityBadges = [
   { id: 3, name: "Community Leader", level: "Bronze", icon: GlobeAmericasIcon, desc: "5 Collection Points", color: "text-orange-600", bg: "bg-orange-600/10" },
 ];
 
-export function MyImpact() {
+export function MyImpact({ userToken }: { userToken: string }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

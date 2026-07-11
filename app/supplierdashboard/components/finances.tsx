@@ -8,7 +8,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 
-export function FinancePortal() {
+export function FinancePortal({ userToken }: { userToken: string }) {
   const [finData, setFinData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isWithdrawing, setIsWithdrawing] = useState(false);

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { TruckIcon, MapPinIcon, ChevronRightIcon, CheckCircleIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function RequestPickup() {
+export function RequestPickup({ userToken }: { userToken: string }) {
   const [storedBatches, setStoredBatches] = useState([]);
   const [selectedHub, setSelectedHub] = useState("Nairobi Central Hub");
   const [isSubmitting, setIsSubmitting] = useState(false);

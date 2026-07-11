@@ -20,7 +20,7 @@ const recentTransactions = [
   { id: "TX-9901", type: "Clear PET Flakes", time: "22m ago", weight: "12.4t", status: "In Transit" },
 ];
 
-export function SupplierOverview() {
+export function SupplierOverview({ userToken }: { userToken: string }) {
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-end">
