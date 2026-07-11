@@ -129,7 +129,7 @@ export function Inventory() {
       grade: formGrade,
       weight: formattedWeight,
       supplier: formSupplier,
-      driver: formDriver
+      driver: formDriver,
     };
 
     const isEdit = !!editingItem;
