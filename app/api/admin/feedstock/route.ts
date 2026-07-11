@@ -18,7 +18,7 @@ export async function GET() {
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch feedstock configuration matrix" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -29,34 +29,43 @@ export async function POST(request: Request) {
     const db = await getDatabase();
     const body = await request.json();
 
-    if (!body.name || !body.group || !body.grade) {
+    // Validation updated to verify that the grades array exists and contains elements
+    if (
+      !body.name ||
+      !body.group ||
+      !Array.isArray(body.grades) ||
+      body.grades.length === 0
+    ) {
       return NextResponse.json(
-        { error: "Missing required parameters (name, group, grade)" },
-        { status: 400 }
+        {
+          error:
+            "Missing required parameters (name, group, array values for grades)",
+        },
+        { status: 400 },
       );
     }
 
     const newFeedstock = {
       name: body.name,
       group: body.group, // "Polymers" or "Metals"
-      grade: body.grade, // e.g., "Rigid Plastics", "Bottle Caps"
+      grades: body.grades, // Array of strings e.g., ["Clear Bales", "Post-Consumer Flakes"]
       totalWeight: body.totalWeight || "0 kg",
       activeOrders: Number(body.activeOrders) || 0,
       status: body.status || "Stable",
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     const result = await db.collection(COLLECTION_NAME).insertOne(newFeedstock);
 
     return NextResponse.json(
       { _id: result.insertedId, ...newFeedstock },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to record feedstock parameter node" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -71,29 +80,38 @@ export async function PUT(request: Request) {
     if (!id) {
       return NextResponse.json(
         { error: "Target document Identifier (id) is required" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    if (
+      updateData.grades &&
+      (!Array.isArray(updateData.grades) || updateData.grades.length === 0)
+    ) {
+      return NextResponse.json(
+        { error: "Grades parameter must be a non-empty array structure" },
+        { status: 400 },
       );
     }
 
     const updatePayload = {
       name: updateData.name,
       group: updateData.group,
-      grade: updateData.grade,
+      grades: updateData.grades, // Overwrites the old multi-grade configuration list array
       totalWeight: updateData.totalWeight,
       activeOrders: Number(updateData.activeOrders) || 0,
       status: updateData.status,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
-    const result = await db.collection(COLLECTION_NAME).updateOne(
-      { _id: new ObjectId(id) },
-      { $set: updatePayload }
-    );
+    const result = await db
+      .collection(COLLECTION_NAME)
+      .updateOne({ _id: new ObjectId(id) }, { $set: updatePayload });
 
     if (result.matchedCount === 0) {
       return NextResponse.json(
         { error: "Target feedstock document not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -101,7 +119,7 @@ export async function PUT(request: Request) {
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to update feedstock operational profile" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -115,27 +133,32 @@ export async function DELETE(request: Request) {
 
     if (!id) {
       return NextResponse.json(
-        { error: "Target stream target payload target parameter (id) required" },
-        { status: 400 }
+        {
+          error: "Target stream target payload target parameter (id) required",
+        },
+        { status: 400 },
       );
     }
 
     const result = await db.collection(COLLECTION_NAME).deleteOne({
-      _id: new ObjectId(id)
+      _id: new ObjectId(id),
     });
 
     if (result.deletedCount === 0) {
       return NextResponse.json(
         { error: "Classification structure entry missing or already removed" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
-    return NextResponse.json({ success: true, message: "Feedstock matrix link detached" });
+    return NextResponse.json({
+      success: true,
+      message: "Feedstock matrix link detached",
+    });
   } catch (error) {
     return NextResponse.json(
       { error: "Critical failure parsing detachment payload sequence" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

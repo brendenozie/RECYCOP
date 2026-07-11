@@ -33,7 +33,7 @@ import { FeedstockCategories } from "./components/FeedstockCategories";
 const navItems = [
   { id: "overview", label: "Dashboard", icon: Squares2X2Icon },
   { id: "users", label: "User Access", icon: UserGroupIcon },
-  { id: "feedstock", label: "Feedstock Categories", icon: Squares2X2Icon },
+  { id: "feedstock", label: "Feedstock Cat", icon: Squares2X2Icon },
   { id: "inventory", label: "Material Ledger", icon: ArchiveBoxIcon },
   { id: "hubs", label: "Regional Hubs", icon: MapIcon },
   { id: "checkpoints", label: "Checkpoints", icon: IdentificationIcon },

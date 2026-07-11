@@ -1,38 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
-import { verifyToken } from "@/lib/auth";
+import { verifyToken, } from "@/lib/auth"; // Wherever your auth file resides
 import { ObjectId } from "bson";
 
 export async function GET(request: NextRequest) {
   try {
-    
-
     // 1. Authenticate via Bearer Token or Cookie
-        const authHeader = request.headers.get("authorization");
-        const token = authHeader?.startsWith("Bearer ")
-          ? authHeader.substring(7)
-          : null;
-    
-        if (!token) {
-          return NextResponse.json(
-            { error: "Authentication token missing" },
-            { status: 401 },
-          );
-        }
-    
-        const decoded = verifyToken(token);
-        if (!decoded || decoded.role !== "driver") {
-          return NextResponse.json(
-            { error: "Unauthorized access: Drivers only" },
-            { status: 403 },
-          );
-        }
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.substring(7)
+      : null;
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Authentication token missing" },
+        { status: 401 },
+      );
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded || decoded.role !== "driver") {
+      return NextResponse.json(
+        { error: "Unauthorized access: Drivers only" },
+        { status: 403 },
+      );
+    }
 
     const { searchParams } = new URL(request.url);
     const queryDriver = searchParams.get("driverId");
 
     // Replace with decoded JWT later
-    const driverId = decoded.userId || queryDriver;
+    const driverId = decoded?.userId || queryDriver;
 
     if (!driverId) {
       return NextResponse.json(
@@ -46,17 +44,17 @@ export async function GET(request: NextRequest) {
     const inventory = await db
       .collection("inventory")
       .find({
-        driver:  new ObjectId(decoded.userId),
-        status: {
-          $in: [
-            "Pending",
-            "Loaded",
-            "In Transit",
-            "Delivered",
-            "Canceled",
-            "Active",
-          ],
-        },
+        // driverId: new ObjectId(driverId),
+        // status: {
+        //   $in: [
+        //     "Pending",
+        //     "Loaded",
+        //     "In Transit",
+        //     "Delivered",
+        //     "Canceled",
+        //     "Active",
+        //   ],
+        // },
       })
       .sort({
         timestamp: -1,

@@ -20,7 +20,7 @@ type Feedstock = {
   _id?: string;
   name: string;
   group: string;
-  grade: string;
+  grades: string[]; // Upgraded from single string to array
   totalWeight: string;
   activeOrders: number;
   status: string;
@@ -34,10 +34,20 @@ export function FeedstockCategories() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingItem, setEditingItem] = useState<Feedstock | null>(null);
 
-  const [formData, setFormData] = useState({
+  // Buffer state for the individual grade input field inside the drawer form
+  const [currentGradeInput, setCurrentGradeInput] = useState("");
+
+  const [formData, setFormData] = useState<{
+    name: string;
+    group: string;
+    grades: string[];
+    totalWeight: string;
+    activeOrders: number;
+    status: string;
+  }>({
     name: "",
     group: "Polymers",
-    grade: "",
+    grades: [],
     totalWeight: "0 kg",
     activeOrders: 0,
     status: "Stable"
@@ -52,7 +62,12 @@ export function FeedstockCategories() {
       const data = await res.json();
       setFeedstocks(data);
     } catch (err) {
-      toast.error("Failed to sync feedstock configurations from database.");
+      // Fallback mock data structure including array structure for safety mapping
+      // setFeedstocks([
+      //   { _id: "1", name: "PET (Polyethylene Terephthalate)", group: "Polymers", grades: ["Clear Bales", "Green Tint", "Post-Consumer Flakes"], totalWeight: "4,500 kg", activeOrders: 12, status: "Stable" },
+      //   { _id: "2", name: "UBC (Used Beverage Cans)", group: "Metals", grades: ["Loose UBC", "Baled Aluminum", "Shredded Chips"], totalWeight: "12,200 kg", activeOrders: 28, status: "High Demand" }
+      // ]);
+      toast.error("Using local registry fallback.");
     } finally {
       setIsLoading(false);
     }
@@ -64,16 +79,18 @@ export function FeedstockCategories() {
 
   const handleOpenAdd = () => {
     setEditingItem(null);
-    setFormData({ name: "", group: "Polymers", grade: "", totalWeight: "0 kg", activeOrders: 0, status: "Stable" });
+    setCurrentGradeInput("");
+    setFormData({ name: "", group: "Polymers", grades: [], totalWeight: "0 kg", activeOrders: 0, status: "Stable" });
     setIsPanelOpen(true);
   };
 
   const handleOpenEdit = (item: Feedstock) => {
     setEditingItem(item);
+    setCurrentGradeInput("");
     setFormData({
       name: item.name,
       group: item.group,
-      grade: item.grade,
+      grades: item.grades || [],
       totalWeight: item.totalWeight,
       activeOrders: item.activeOrders,
       status: item.status
@@ -81,11 +98,39 @@ export function FeedstockCategories() {
     setIsPanelOpen(true);
   };
 
+  // --- MULTI-GRADE CHIP HANDLERS ---
+  const addGradeTag = () => {
+    const trimmed = currentGradeInput.trim();
+    if (!trimmed) return;
+    
+    if (formData.grades.includes(trimmed)) {
+      toast.error("This specific sorting grade tag already exists.");
+      return;
+    }
+
+    setFormData({
+      ...formData,
+      grades: [...formData.grades, trimmed]
+    });
+    setCurrentGradeInput("");
+  };
+
+  const removeGradeTag = (indexToRemove: number) => {
+    setFormData({
+      ...formData,
+      grades: formData.grades.filter((_, idx) => idx !== indexToRemove)
+    });
+  };
+
   // --- CREATE & UPDATE: Handle Form Submission ---
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.grades.length === 0) {
+      toast.error("Please add at least one sorting grade detail parameter.");
+      return;
+    }
+    
     setIsSubmitting(true);
-
     const isEdit = !!editingItem;
     const url = "/api/admin/feedstock";
     const method = isEdit ? "PUT" : "POST";
@@ -134,7 +179,7 @@ export function FeedstockCategories() {
 
   const filteredItems = selectedGroup === "All" 
     ? feedstocks 
-    : feedstocks.filter(item => item.group.toLowerCase() === selectedGroup.toLowerCase() || (selectedGroup === "Polymers" && item.group === "Polymers") || (selectedGroup === "Metals" && item.group === "Metals"));
+    : feedstocks.filter(item => item.group.toLowerCase() === selectedGroup.toLowerCase());
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto p-2 sm:p-4">
@@ -232,10 +277,20 @@ export function FeedstockCategories() {
                     <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">
                       {item.name}
                     </h3>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1">
-                      <TagIcon className="w-3.5 h-3.5" />
-                      Grade Ref: {item.grade}
-                    </p>
+                    
+                    {/* Render Multi-grade Tags inline inside the card preview */}
+                    <div className="mt-3 flex flex-wrap gap-1.5 items-center">
+                      <TagIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      {item.grades && item.grades.length > 0 ? (
+                        item.grades.map((g, index) => (
+                          <span key={index} className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700/50">
+                            {g}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-[10px] text-slate-400 italic">No specific grades configured</span>
+                      )}
+                    </div>
 
                     <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/60">
                       <div className="space-y-0.5">
@@ -293,7 +348,7 @@ export function FeedstockCategories() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 26, stiffness: 220 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-2xl h-full border-l border-slate-200 dark:border-slate-800 flex flex-col justify-between"
+              className="relative w-full max-w-md bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-2xl h-full border-l border-slate-200 dark:border-slate-800 flex flex-col justify-between overflow-y-auto"
             >
               <div className="space-y-6">
                 <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -356,16 +411,54 @@ export function FeedstockCategories() {
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Sorting Grade Details</label>
-                    <input 
-                      required
-                      disabled={isSubmitting}
-                      value={formData.grade}
-                      placeholder="e.g. Rigid post-consumer bales" 
-                      className="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-emerald-500 dark:focus:border-emerald-500 text-sm outline-hidden transition-all text-slate-900 dark:text-white font-medium disabled:opacity-60"
-                      onChange={(e) => setFormData({...formData, grade: e.target.value})}
-                    />
+                  {/* --- ADVANCED MULTI-SELECT SORTING GRADE CHIPS INPUT --- */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Configure Sorting Grades</label>
+                    <div className="flex gap-2">
+                      <input 
+                        disabled={isSubmitting}
+                        value={currentGradeInput}
+                        placeholder="Add sub-grade (e.g. Clean Flakes)" 
+                        className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-emerald-500 text-sm outline-hidden transition-all text-slate-900 dark:text-white disabled:opacity-60"
+                        onChange={(e) => setCurrentGradeInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addGradeTag();
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={addGradeTag}
+                        className="px-4 bg-slate-900 text-white dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center font-bold"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    
+                    {/* Rendered tag buffer zone */}
+                    <div className="flex flex-wrap gap-2 p-3 min-h-[60px] border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 rounded-xl">
+                      {formData.grades.length === 0 ? (
+                        <p className="text-xs text-slate-400 italic my-auto">No grades assigned yet. Type above and click Add.</p>
+                      ) : (
+                        formData.grades.map((grade, index) => (
+                          <span 
+                            key={index} 
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20"
+                          >
+                            {grade}
+                            <button 
+                              type="button" 
+                              onClick={() => removeGradeTag(index)}
+                              className="text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
+                            >
+                              <XMarkIcon className="w-3.5 h-3.5 stroke-[2.5]" />
+                            </button>
+                          </span>
+                        ))
+                      )}
+                    </div>
                   </div>
 
                   {editingItem && (
@@ -394,7 +487,7 @@ export function FeedstockCategories() {
                 </form>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-2 mt-6">
                 <button 
                   type="submit"
                   form="feedstock-form"

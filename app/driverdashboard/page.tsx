@@ -55,8 +55,11 @@ export default function DriverMobileDashboard({ userToken }: { userToken: string
     async function fetchAssignedLoads() {
       try {
         // Updated to fetch a list of loads assigned to this driver
-        const res = await fetch("/api/driver/assigned-loads", {
-          headers: { Authorization: `Bearer ${userToken}` }
+        const res = await fetch("/api/driver/assigned-load", {
+          headers: {
+            "Authorization": `Bearer ${userToken}`,
+            "Content-Type": "application/json"
+          }
         });
         if (res.ok) {
           const data = await res.json();

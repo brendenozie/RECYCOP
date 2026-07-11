@@ -6,13 +6,13 @@ import {
   CubeIcon, 
   PlusIcon, 
   XMarkIcon,
-  ArrowPathIcon 
+  ArrowPathIcon,
+  InboxIcon
 } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { SupplierLedgerForm } from "./SupplierLedgerForm";
 
-// Type matches the payload schema managed by /api/admin/inventory
 type InventoryBatch = {
   _id: string;
   name: string;
@@ -26,11 +26,10 @@ export function MyBatches({ userToken }: { userToken: string }) {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
-  // Read directly from the unified inventory endpoint
   useEffect(() => {
     async function syncWarehouseStock() {
       try {
-        const res = await fetch("/api/admin/inventory", {
+        const res = await fetch("/api/supplier/inventory", {
           headers: {
             "Authorization": `Bearer ${userToken}`,
             "Content-Type": "application/json"
@@ -42,7 +41,7 @@ export function MyBatches({ userToken }: { userToken: string }) {
         const data = await res.json();
         setBatches(data);
       } catch (err) {
-        toast.error("Could not sync live warehouse batches.");
+        toast.error("Could not update live warehouse inventory.");
       } finally {
         setLoading(false);
       }
@@ -52,99 +51,157 @@ export function MyBatches({ userToken }: { userToken: string }) {
   }, [userToken]);
 
   return (
-    <div className="space-y-6">
-      <div className="p-6 md:p-10 rounded-[3rem] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 relative overflow-hidden shadow-xs">
+    <div className="w-full max-w-5xl mx-auto space-y-6">
+      {/* --- MAIN CARD CONTAINER --- */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
         
         {/* --- HEADER --- */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50 dark:bg-slate-900/50">
           <div>
-            <h3 className="text-xl font-bold italic font-serif text-slate-900 dark:text-white">Inventory Batches</h3>
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Live Warehouse Sync</p>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white tracking-tight">
+              Inventory Batches
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+              View and manage current items matching warehouse stock.
+            </p>
           </div>
+          
           <button 
             onClick={() => setShowForm(!showForm)}
             className={cn(
-              "w-full md:w-auto text-[10px] font-black uppercase tracking-widest px-6 py-3 text-white rounded-xl flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-md active:scale-95",
-              showForm ? "bg-slate-800 hover:bg-slate-700" : "bg-emerald-600 hover:bg-emerald-500"
+              "w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm focus:outline-hidden focus:ring-2 focus:ring-offset-2",
+              showForm 
+                ? "bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 focus:ring-slate-500" 
+                : "bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-500"
             )}
           >
-            {showForm ? <XMarkIcon className="w-4 h-4 stroke-[3]" /> : <PlusIcon className="w-4 h-4 stroke-[3]" />}
-            {showForm ? "Close Form" : "Create New Batch"}
+            {showForm ? (
+              <>
+                <XMarkIcon className="w-4 h-4" />
+                <span>Cancel</span>
+              </>
+            ) : (
+              <>
+                <PlusIcon className="w-4 h-4" />
+                <span>Add New Batch</span>
+              </>
+            )}
           </button>
         </div>
 
-        {/* --- OPTIONAL FORM SLOT --- */}
+        {/* --- FORM EXPANSION --- */}
         <AnimatePresence>
           {showForm && (
             <motion.div 
-              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-              animate={{ opacity: 1, height: "auto", marginBottom: 32 }}
-              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-              className="overflow-hidden"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/20"
             >
-              <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center text-xs font-bold text-slate-400 uppercase tracking-widest">
+              <div className="p-6">
                 <SupplierLedgerForm userToken={userToken} />
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* --- BATCH LISTING --- */}
-        <div className="space-y-4">
+        {/* --- BATCH LIST & LOADING STATES --- */}
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {loading ? (
-            <div className="py-20 flex flex-col items-center justify-center gap-4 text-emerald-600 dark:text-emerald-500">
-              <ArrowPathIcon className="w-8 h-8 animate-spin" />
-              <div className="text-slate-400 animate-pulse font-black uppercase tracking-tighter text-xs">Synchronizing Stock...</div>
+            <div className="py-16 flex flex-col items-center justify-center gap-3">
+              <ArrowPathIcon className="w-6 h-6 animate-spin text-emerald-600 dark:text-emerald-500" />
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                Loading warehouse items...
+              </p>
             </div>
           ) : batches.length === 0 ? (
             <motion.div 
-              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              className="py-20 text-center border-2 border-dashed border-slate-200 dark:border-white/5 rounded-3xl"
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }}
+              className="py-16 text-center flex flex-col items-center justify-center gap-3"
             >
-               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">No batches recorded for this node.</p>
+              <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 dark:text-slate-500">
+                <InboxIcon className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">No batches found</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Get started by creating a new inventory item assignment.</p>
+              </div>
             </motion.div>
           ) : (
-            <AnimatePresence mode="popLayout">
-              {batches.map((batch) => (
-                <motion.div 
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  key={batch._id} 
-                  className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 rounded-3xl bg-slate-50 dark:bg-slate-900/40 border border-transparent hover:border-emerald-500/20 transition-all group"
-                >
-                  <div className="flex items-center gap-6 mb-4 md:mb-0">
-                    <div className="h-14 w-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 group-hover:rotate-6 transition-transform shadow-sm">
-                      <CubeIcon className="w-6 h-6 text-emerald-500" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        {batch.name} 
-                        <span className="text-[10px] px-2 py-0.5 bg-slate-200 dark:bg-slate-800 rounded text-slate-500 font-mono">
-                          #{batch._id.slice(-6).toUpperCase()}
-                        </span>
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1 uppercase tracking-tighter font-medium">
-                        Weight: <span className="text-slate-900 dark:text-white font-bold">{batch.weight}</span> • 
-                        Grade: <span className="text-emerald-500 font-bold ml-1">{batch.grade}</span>
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between w-full md:w-auto gap-4">
-                      <span className={cn(
-                        "text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full border",
-                        batch.status === "Stored" 
-                          ? "bg-blue-50 border-blue-100 text-blue-600 dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-blue-400" 
-                          : "bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400"
-                      )}>
-                        {batch.status}
-                      </span>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/70 dark:bg-slate-900/30 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
+                    <th className="py-3 px-6">Batch Details</th>
+                    <th className="py-3 px-6 hidden sm:table-cell">Weight</th>
+                    <th className="py-3 px-6 hidden sm:table-cell">Grade</th>
+                    <th className="py-3 px-6 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <AnimatePresence mode="popLayout">
+                    {batches.map((batch) => (
+                      <motion.tr 
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        key={batch._id}
+                        className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors group"
+                      >
+                        {/* Column 1: Details */}
+                        <td className="py-4 px-6 vertical-align-middle">
+                          <div className="flex items-center gap-4">
+                            <div className="hidden xs:flex h-10 w-10 shrink-0 rounded-lg bg-slate-100 dark:bg-slate-800 items-center justify-center text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/50">
+                              <CubeIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-500" />
+                            </div>
+                            <div>
+                              <div className="font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                                <span>{batch.name}</span>
+                                <span className="text-[11px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-500 dark:text-slate-400 font-mono border border-slate-200/40 dark:border-slate-700/30">
+                                  {batch._id.slice(-6).toUpperCase()}
+                                </span>
+                              </div>
+                              {/* Mobile-only secondary context row */}
+                              <div className="sm:hidden text-xs text-slate-500 dark:text-slate-400 mt-1 space-x-2">
+                                <span>Weight: <strong className="text-slate-700 dark:text-slate-300">{batch.weight}</strong></span>
+                                <span>•</span>
+                                <span>Grade: <strong className="text-emerald-600 dark:text-emerald-400">{batch.grade}</strong></span>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Column 2: Weight */}
+                        <td className="py-4 px-6 text-sm text-slate-700 dark:text-slate-300 hidden sm:table-cell font-medium">
+                          {batch.weight}
+                        </td>
+
+                        {/* Column 3: Grade */}
+                        <td className="py-4 px-6 hidden sm:table-cell">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30">
+                            Grade {batch.grade}
+                          </span>
+                        </td>
+
+                        {/* Column 4: Status */}
+                        <td className="py-4 px-6 text-right">
+                          <span className={cn(
+                            "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border",
+                            batch.status === "Stored" 
+                              ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-blue-400" 
+                              : "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400"
+                          )}>
+                            {batch.status}
+                          </span>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

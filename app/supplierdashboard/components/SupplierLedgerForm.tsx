@@ -15,12 +15,19 @@ type FeedstockOption = {
   _id: string;
   name: string;
   group: string;
-  grade: string;
+  grades: string[];
+};
+
+// Generic user type for drivers and suppliers
+type SystemUser = {
+  _id: string;
+  name: string;
 };
 
 export function SupplierLedgerForm({ userToken }: { userToken: string }) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [drivers, setDrivers] = useState<{ _id: string; name: string }[]>([]);
+  const [drivers, setDrivers] = useState<SystemUser[]>([]);
+  const [suppliers, setSuppliers] = useState<SystemUser[]>([]);
   const [feedstockStreams, setFeedstockStreams] = useState<FeedstockOption[]>([]);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,6 +38,21 @@ export function SupplierLedgerForm({ userToken }: { userToken: string }) {
   const [formGrade, setFormGrade] = useState("");
   const [formWeight, setFormWeight] = useState("");
   const [formDriver, setFormDriver] = useState("");
+  const [formSupplier, setFormSupplier] = useState("");
+
+  // Derived available grades: Deduplicated and sorted alphabetically for clean presentation
+  const availableGrades = Array.from(
+                          new Set(
+                            feedstockStreams
+                              .filter(
+                                (stream) =>
+                                  stream.name === formName &&
+                                  Array.isArray(stream.grades) &&
+                                  stream.grades.length > 0
+                              )
+                              .flatMap((stream) => stream.grades)
+                          )
+                        ).sort((a, b) => a.localeCompare(b));
 
   // --- Sync contextual selections dynamically when the drawer mounts ---
   useEffect(() => {
@@ -39,11 +61,14 @@ export function SupplierLedgerForm({ userToken }: { userToken: string }) {
       setIsLoadingStreams(true);
       
       try {
-        const [driversRes, feedstockRes] = await Promise.all([
+        const [driversRes, feedstockRes, suppliersRes] = await Promise.all([
           fetch("/api/admin/users?role=driver", {
             headers: { Authorization: `Bearer ${userToken}` }
           }),
           fetch("/api/admin/feedstock", {
+            headers: { Authorization: `Bearer ${userToken}` }
+          }),
+          fetch("/api/admin/users?role=supplier", {
             headers: { Authorization: `Bearer ${userToken}` }
           })
         ]);
@@ -56,6 +81,10 @@ export function SupplierLedgerForm({ userToken }: { userToken: string }) {
           const streams: FeedstockOption[] = await feedstockRes.json();
           setFeedstockStreams(streams);
         }
+
+        if (suppliersRes.ok) {
+          setSuppliers(await suppliersRes.json());
+        }
       } catch (err) {
         toast.error("Failed to fetch operational parameters.");
       } finally {
@@ -66,13 +95,10 @@ export function SupplierLedgerForm({ userToken }: { userToken: string }) {
     initializeFormContexts();
   }, [isPanelOpen, userToken]);
 
-  // When a user selects a dynamic stream, auto-populate the recommended grade field
+  // When a user selects a dynamic stream, reset the grade choice to force explicit selection
   const handleStreamChange = (streamName: string) => {
     setFormName(streamName);
-    const matchedStream = feedstockStreams.find(s => s.name === streamName);
-    if (matchedStream) {
-      setFormGrade(matchedStream.grade);
-    }
+    setFormGrade(""); // Clears the previous state so the user must actively select the sorting grade
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -87,7 +113,7 @@ export function SupplierLedgerForm({ userToken }: { userToken: string }) {
       grade: formGrade,
       weight: formattedWeight,
       driver: formDriver,
-      supplier: "" // Backend JWT identity gracefully overrides this field securely
+      supplier: formSupplier 
     };
 
     try {
@@ -110,6 +136,7 @@ export function SupplierLedgerForm({ userToken }: { userToken: string }) {
       setFormGrade("");
       setFormWeight("");
       setFormDriver("");
+      setFormSupplier("");
     } catch (err) {
       toast.error("Failed to commit manifest parameters.");
     } finally {
@@ -163,6 +190,22 @@ export function SupplierLedgerForm({ userToken }: { userToken: string }) {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5 text-sm text-slate-900 dark:text-white">
+                  
+                  {/* <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Originating Supplier</label>
+                    <select 
+                      required 
+                      value={formSupplier} 
+                      onChange={(e) => setFormSupplier(e.target.value)} 
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold focus:border-emerald-500 outline-hidden text-slate-900 dark:text-white"
+                    >
+                      <option value="">Select source supplier...</option>
+                      {suppliers.map((sup) => (
+                        <option key={sup._id} value={sup._id}>{sup.name}</option>
+                      ))}
+                    </select>
+                  </div> */}
+
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Material Stream Class</label>
                     <select 
@@ -172,34 +215,51 @@ export function SupplierLedgerForm({ userToken }: { userToken: string }) {
                       className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold focus:border-emerald-500 outline-hidden text-slate-900 dark:text-white"
                     >
                       <option value="">Select active stream category...</option>
-                      {feedstockStreams.map((stream) => (
-                        <option key={stream._id} value={stream.name}>
-                          {stream.name} ({stream.group})
-                        </option>
-                      ))}
+                      {Array.from(new Set(feedstockStreams.map(s => s.name))).map((uniqueName) => {
+                        const sampleStream = feedstockStreams.find(s => s.name === uniqueName);
+                        return (
+                          <option key={sampleStream?._id} value={uniqueName}>
+                            {uniqueName} ({sampleStream?.group})
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Cargo Sort Quality / Grade</label>
-                    <input 
+                    <select 
                       required 
+                      disabled={!formName}
                       value={formGrade} 
                       onChange={(e) => setFormGrade(e.target.value)} 
-                      placeholder="e.g. Clean Premium Sorted" 
-                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold focus:border-emerald-500 outline-hidden" 
-                    />
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold focus:border-emerald-500 outline-hidden text-slate-900 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {!formName ? (
+                        <option value="">Select a stream first...</option>
+                      ) : (
+                        <>
+                          {/* The default placeholder forces the operator to make a selection */}
+                          <option value="">Select quality grade...</option>
+                          {availableGrades.map((grade, idx) => (
+                            <option key={`grade-${idx}`} value={grade}>
+                              {grade}
+                            </option>
+                          ))}
+                        </>
+                      )}
+                    </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Net Cargo Weight (Tons)</label>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Net Cargo Weight (Kgs)</label>
                     <div className="relative">
                       <input required type="number" step="0.01" value={formWeight} onChange={(e) => setFormWeight(e.target.value)} placeholder="e.g. 12.4" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 pr-12 font-bold text-emerald-600 dark:text-emerald-400 focus:border-emerald-500 outline-hidden" />
-                      <span className="absolute right-4 top-3.5 text-slate-400 font-bold text-xs uppercase">Tons</span>
+                      <span className="absolute right-4 top-3.5 text-slate-400 font-bold text-xs uppercase">Kgs</span>
                     </div>
                   </div>
 
-                  <div>
+                  {/* <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Assigned Courier Driver</label>
                     <select 
                       value={formDriver} 
@@ -211,7 +271,7 @@ export function SupplierLedgerForm({ userToken }: { userToken: string }) {
                         <option key={drv._id} value={drv.name}>{drv.name}</option>
                       ))}
                     </select>
-                  </div>
+                  </div> */}
 
                   <button 
                     type="submit" 

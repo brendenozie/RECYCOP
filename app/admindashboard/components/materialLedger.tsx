@@ -32,7 +32,12 @@ type Material = {
   driver: string;
 };
 
-type DbRelationNode = { _id: string; name: string; [key: string]: any };
+type DbRelationNode = { 
+  _id: string; 
+  name: string; 
+  grades?: string[]; 
+  [key: string]: any 
+};
 
 export function Inventory() {
   const [items, setItems] = useState<Material[]>([]);
@@ -53,11 +58,39 @@ export function Inventory() {
   const [formSupplier, setFormSupplier] = useState("");
   const [formDriver, setFormDriver] = useState("");
 
+  // Find the selected category object to extract its contextually nested grades array
+  const activeCategoryNode = useMemo(() => {
+    return categories.find(cat => cat.name === formName);
+  }, [formName, categories]);
+
+  // Fallback static configuration matrix matching your UI defaults
+  const fallbackGradesMap: Record<string, string[]> = {
+    "PP (Polypropylene)": ["Rigid Plastics", "Bottle Caps", "Post-Industrial Scrap"],
+    "HDPE (High-Density Polyethylene)": ["Blow Molded Bottles", "Crushed Flakes", "Unrefined Regrind"],
+    "LDPE (Low-Density Polyethylene)": ["Clear Film Liners", "Colored Film Bales"],
+    "Aluminum Closures": ["UBC Taint Tabor", "Litho Sheet Scrap"],
+    "Aluminum Cans (UBCs)": ["Shredded UBC Bales", "Dense Clean Briquettes"]
+  };
+
+  // Computes active available options array based on the category chosen
+  const availableGrades = useMemo((): string[] => {
+    if (activeCategoryNode?.grades && Array.isArray(activeCategoryNode.grades)) {
+      return activeCategoryNode.grades;
+    }
+    return fallbackGradesMap[formName] || [];
+  }, [formName, activeCategoryNode]);
+
+  // Reset selected grade if it doesn't exist within the updated category criteria
+  useEffect(() => {
+    if (formName && !availableGrades.includes(formGrade) && !editingItem) {
+      setFormGrade("");
+    }
+  }, [formName, availableGrades, formGrade, editingItem]);
+
   // --- READ: SYNC BOTH ACTIVE INVENTORY AND RELATED PIPELINE STREAMS ---
   const syncGlobalContext = async () => {
     setIsLoadingMatrix(true);
     try {
-      // Parallel batch fetch queries to maximize connectivity response rates
       const [resInv, resCat, resSup, resDrv] = await Promise.all([
         fetch("/api/admin/inventory"),
         fetch("/api/admin/feedstock"),
@@ -148,11 +181,9 @@ export function Inventory() {
       toast.success(isEdit ? "Inventory shipment details modified" : "Incoming batch successfully logged");
       closePanel();
       
-      // Re-query database to obtain exact snapshot sequence
       const freshRes = await fetch("/api/admin/inventory");
       if (freshRes.ok) setItems(await freshRes.json());
     } catch (err) {
-      // Local Array state backup mutation fallback logic
       const localFallbackItem = payload as Material;
       if (isEdit) {
         setItems(items.map(i => (i._id === editingItem._id || i.id === editingItem.id) ? { ...i, ...localFallbackItem } : i));
@@ -176,7 +207,6 @@ export function Inventory() {
       toast.success("Material record cleared from database entry logs");
       setItems(prev => prev.filter(i => (i._id !== item._id && i.id !== item.id)));
     } catch (err) {
-      // Local fallback removal fallback option
       setItems(items.filter(i => (i._id !== item._id && i.id !== item.id)));
       toast.warning("Cleared from interface cache; server synchronization pending");
     }
@@ -200,7 +230,6 @@ export function Inventory() {
     setFormDriver("");
   };
 
-  // Summary Metrics calculations
   const totalVolume = useMemo(() => {
     return items.reduce((sum, item) => sum + parseFloat(item.weight.replace(/[^\d.-]/g, "") || "0"), 0).toFixed(1);
   }, [items]);
@@ -214,7 +243,6 @@ export function Inventory() {
         "min-h-screen transition-colors duration-300 font-sans antialiased selection:bg-emerald-500/20",
         isDarkMode ? "bg-slate-950 text-slate-100" : "bg-slate-50/60 text-slate-900"
     )}>
-      {/* Soft Background Accents */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-emerald-500/[0.04] dark:bg-emerald-500/[0.02] blur-3xl rounded-full" />
         <div className="absolute bottom-10 left-10 w-96 h-96 bg-blue-500/[0.04] dark:bg-blue-500/[0.02] blur-3xl rounded-full" />
@@ -270,16 +298,31 @@ export function Inventory() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Material Sorting Grade</label>
-                  <input value={formGrade} onChange={(e) => setFormGrade(e.target.value)} placeholder="Quality Status or Grade (e.g. UBC Standard Flakes)" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-hidden focus:border-emerald-500" />
+                  <select
+                    required
+                    disabled={!formName}
+                    value={formGrade}
+                    onChange={(e) => setFormGrade(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-hidden cursor-pointer focus:border-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">
+                      {!formName ? "Awaiting Classification Selection..." : "Choose Target Sub-Grade Stream"}
+                    </option>
+                    {availableGrades.map((grade, idx) => (
+                      <option key={idx} value={grade} className="dark:bg-slate-900">
+                        {grade}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Weight (in Tons)</label>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Weight (in Kgs)</label>
                     <input required type="number" step="0.01" value={formWeight} onChange={(e) => setFormWeight(e.target.value)} placeholder="e.g. 5.4" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-bold text-emerald-600 dark:text-emerald-400 outline-hidden focus:border-emerald-500" />
                   </div>
                   <div className="flex items-center text-[11px] text-slate-400 leading-tight pt-5">
-                    * Net weights above 10t trigger verification review locks.
+                    * Net weights above 10,000 Kgs trigger verification review locks.
                   </div>
                 </div>
 
@@ -319,8 +362,19 @@ export function Inventory() {
                       ))}
                       {drivers.length === 0 && (
                         <>
-                          <option value="John Kamau" className="dark:bg-slate-900">John Kamau</option>
-                          <option value="David Omondi" className="dark:bg-slate-900">David Omondi</option>
+                          {/* <AnimatePresence>
+                            <motion.option
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              value="John Kamau"
+                              className="dark:bg-slate-900"
+                            >
+                              John Kamau
+                            </motion.option> */}
+
+                          {/* <option value="John Kamau" className="dark:bg-slate-900">John Kamau</option>
+                          <option value="David Omondi" className="dark:bg-slate-900">David Omondi</option> */}
                         </>
                       )}
                     </select>
@@ -397,7 +451,7 @@ export function Inventory() {
             </div>
           </div>
           
-          {/* Mobile Card Layout (Visible below md) */}
+          {/* Mobile Card Layout */}
           <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
             {items.map((item) => {
               const status = getStatus(item);
@@ -444,7 +498,7 @@ export function Inventory() {
             })}
           </div>
 
-          {/* Desktop Spreadsheet Table Layout (Visible on md and up) */}
+          {/* Desktop Spreadsheet Table Layout */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
