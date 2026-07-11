@@ -1,139 +1,224 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowRightIcon, 
   CpuChipIcon, 
   TruckIcon, 
   ChevronRightIcon,
+  ChevronLeftIcon,
   ChartBarIcon
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 
+const SLIDES = [
+  {
+    id: 1,
+    image: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=1920&q=80",
+    alt: "Recycling pickup activity"
+  },
+  {
+    id: 2,
+    image: "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=1920&q=80",
+    alt: "Community environmental effort"
+  },
+  {
+    id: 3,
+    image: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1920&q=80",
+    alt: "Green lush nature"
+  }
+];
+
 export default function HeroSection() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Auto-play functionality
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev === SLIDES.length - 1 ? 0 : prev + 1));
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const nextSlide = () => setCurrentSlide((prev) => (prev === SLIDES.length - 1 ? 0 : prev + 1));
+  const prevSlide = () => setCurrentSlide((prev) => (prev === 0 ? SLIDES.length - 1 : prev - 1));
+
   return (
-    <section className="relative min-h-[100vh] sm:min-h-[95vh] w-full overflow-hidden bg-gradient-to-b from-slate-50 to-emerald-50/30 transition-colors duration-500 dark:bg-[#0a0118] text-slate-900 dark:text-white flex items-center">
+    <section className="relative min-h-[100vh] w-full overflow-hidden bg-slate-900 flex items-center">
       
-      {/* Dynamic Background Elements */}
+      {/* Background Image Slider */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-[-10%] left-[-10%] h-[300px] w-[300px] sm:h-[500px] sm:w-[500px] rounded-full bg-emerald-500/10 dark:bg-emerald-500/10 blur-[80px] sm:blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] h-[400px] w-[400px] sm:h-[600px] sm:w-[600px] rounded-full bg-purple-200/40 dark:bg-[#3b0764]/20 blur-[100px] sm:blur-[150px]" />
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={currentSlide}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
+            className="absolute inset-0"
+          >
+            <Image
+              src={SLIDES[currentSlide].image}
+              alt={SLIDES[currentSlide].alt}
+              fill
+              priority
+              className="object-cover"
+            />
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Gradient Overlays for readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0118]/90 via-[#0a0118]/60 to-transparent z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0118] via-transparent to-transparent z-10 opacity-80" />
         
-        {/* Subtle Texture Overlay */}
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 dark:opacity-20 brightness-100 dark:brightness-50 contrast-150 pointer-events-none" />
-        
-        {/* Dark Mode Grid Overlay */}
-        <div className="absolute inset-0 hidden dark:block bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px]" />
+        {/* Subtle Texture */}
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay z-10 pointer-events-none" />
       </div>
 
-      <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16 lg:pt-36 lg:pb-24">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 md:gap-16">
+      {/* Main Content */}
+      <div className="container relative z-20 mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 h-full flex flex-col justify-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
           {/* Left Column: The Narrative */}
-          <div className="lg:col-span-7 text-center lg:text-left">
+          <div className="lg:col-span-7 text-left">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             >
-              <span className="inline-flex items-center rounded-full bg-emerald-600/10 dark:bg-white/10 px-4 py-1.5 text-xs font-bold tracking-wider text-emerald-700 dark:text-emerald-400 ring-1 ring-inset ring-emerald-600/20 dark:ring-white/20 uppercase">
+              <div className="inline-flex items-center rounded-full bg-emerald-500/20 backdrop-blur-md px-4 py-1.5 text-xs font-bold tracking-wider text-emerald-300 ring-1 ring-inset ring-emerald-500/30 uppercase mb-6">
+                <span className="relative flex h-2 w-2 mr-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
                 A Greener, Wealthier Africa
-              </span>
+              </div>
               
-              <h1 className="mt-6 font-sans font-extrabold tracking-tight text-4xl sm:text-6xl xl:text-7xl leading-[1.15] text-slate-900 dark:text-white">
+              <h1 className="font-sans font-extrabold tracking-tight text-5xl sm:text-6xl xl:text-7xl leading-[1.1] text-white">
                 Turning Everyday <br />
-                <span className="text-emerald-600 dark:text-emerald-400">Waste</span> into Community <span className="text-purple-600 dark:text-purple-400">Wealth</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-200">Waste</span> into Community <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-200">Wealth</span>
               </h1>
 
-              <p className="mt-6 max-w-xl mx-auto lg:mx-0 text-base sm:text-lg lg:text-xl leading-relaxed text-slate-600 dark:text-purple-100/80 font-normal">
+              <p className="mt-6 max-w-xl text-lg sm:text-xl leading-relaxed text-slate-300 font-light">
                 Recyc connects local recycling centers with smart digital tools. We help neighborhood collectors earn more, work together seamlessly, and build a cleaner environment for everyone.
               </p>
 
-              <div className="mt-8 flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center lg:justify-start">
-                <button className="group relative flex items-center justify-center rounded-xl bg-emerald-600 dark:bg-emerald-500 px-6 py-4 font-bold text-white dark:text-gray-900 transition-all hover:bg-emerald-700 dark:hover:bg-emerald-400 hover:scale-[1.02] active:scale-95 shadow-md hover:shadow-lg shadow-emerald-600/20 dark:shadow-emerald-500/20">
+              <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                <button className="group relative flex items-center justify-center rounded-xl bg-emerald-500 px-8 py-4 font-bold text-slate-900 transition-all hover:bg-emerald-400 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)]">
                   Join Your Local Center
                   <ArrowRightIcon className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </button>
-                <button className="flex items-center justify-center rounded-xl border border-slate-300 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-4 font-bold backdrop-blur-md transition-all hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-white shadow-sm">
+                <button className="flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-8 py-4 font-bold text-white backdrop-blur-md transition-all hover:bg-white/20 hover:border-white/30">
                   See Our Tools
-                  <ChevronRightIcon className="ml-2 h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <ChevronRightIcon className="ml-2 h-5 w-5 text-purple-400" />
                 </button>
               </div>
             </motion.div>
           </div>
 
-          {/* Right Column: Visual Showcase */}
-          <div className="relative lg:col-span-5 w-full max-w-md mx-auto lg:max-w-none">
+          {/* Right Column: Glassmorphism Data Cards */}
+          <div className="lg:col-span-5 relative w-full max-w-md mx-auto lg:ml-auto lg:mr-0 flex flex-col gap-6">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, delay: 0.2 }}
-              className="relative aspect-[4/5] rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white/40 dark:bg-gradient-to-b dark:from-white/5 dark:to-transparent p-3 shadow-xl overflow-hidden backdrop-blur-sm"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1, delay: 0.4 }}
+              className="rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 p-6 shadow-2xl relative overflow-hidden"
             >
-              {/* Image Layer */}
-              <div className="absolute inset-0 z-0">
-                <Image
-                  src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80" 
-                  alt="Recycling Pickup Activity" 
-                  className="h-full w-full object-cover opacity-90 dark:opacity-60 transition-all duration-1000"
-                  fill
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-50 dark:from-[#0a0118] via-transparent to-transparent" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl -mr-10 -mt-10" />
+              
+              <div className="relative z-10 flex items-center space-x-4 mb-6">
+                <div className="p-3 bg-emerald-500/20 rounded-xl text-emerald-300">
+                  <CpuChipIcon className="h-6 w-6" />
+                </div>
+                <div>
+                  <span className="block text-xs font-bold uppercase tracking-wider text-emerald-400">System Status</span>
+                  <span className="block text-lg font-bold text-white">Recyc App Live</span>
+                </div>
               </div>
-
-              {/* Data Overlay */}
-              <div className="relative z-10 h-full w-full flex flex-col justify-end p-4 sm:p-6 space-y-4">
-                
-                {/* Floating Intelligence Card */}
-                <motion.div 
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute top-6 left-4 sm:-left-4 rounded-xl bg-white/95 dark:bg-[#1a0433]/90 backdrop-blur-xl border border-emerald-500/20 dark:border-emerald-500/30 p-4 shadow-xl"
-                >
-                  <div className="flex items-center space-x-3 mb-2">
-                    <div className="p-1.5 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg text-emerald-600 dark:text-emerald-400">
-                      <CpuChipIcon className="h-4 w-4" />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-white/80">Recyc App Live</span>
+              
+              <div className="space-y-4 relative z-10">
+                <div>
+                  <div className="flex justify-between text-xs text-slate-300 mb-1.5 font-medium">
+                    <span>Network Efficiency</span>
+                    <span>92%</span>
                   </div>
-                  <div className="space-y-1.5">
-                    <div className="h-1.5 w-24 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
-                      <motion.div animate={{ width: ['20%', '90%', '20%'] }} transition={{ duration: 4, repeat: Infinity }} className="h-full bg-emerald-500" />
-                    </div>
-                    <div className="h-1.5 w-20 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
-                      <motion.div animate={{ width: ['40%', '70%', '40%'] }} transition={{ duration: 5, repeat: Infinity }} className="h-full bg-purple-500" />
-                    </div>
+                  <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                    <motion.div animate={{ width: ['40%', '92%', '85%'] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} className="h-full bg-emerald-400 rounded-full" />
                   </div>
-                </motion.div>
-
-                {/* Logistics Feed */}
-                <div className="rounded-2xl bg-white/90 dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 p-4 sm:p-5 space-y-3 shadow-lg">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-1.5">
-                      <TruckIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-white/60">Collection Van</span>
-                    </div>
-                    <span className="text-[10px] font-extrabold tracking-wide text-emerald-600 dark:text-emerald-400">ON THE WAY</span>
+                </div>
+                <div>
+                  <div className="flex justify-between text-xs text-slate-300 mb-1.5 font-medium">
+                    <span>Processing Load</span>
+                    <span>68%</span>
                   </div>
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <p className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">Nairobi Hub</p>
-                      <p className="text-[10px] text-slate-500 dark:text-white/50 font-semibold">Today&apos;s Progress: 84%</p>
-                    </div>
-                    <ChartBarIcon className="h-7 w-7 text-emerald-600 dark:text-emerald-400 opacity-70" />
+                  <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                    <motion.div animate={{ width: ['60%', '68%', '60%'] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="h-full bg-purple-400 rounded-full" />
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            {/* Decorative Orbitals */}
-            <div className="absolute -top-6 -right-6 h-48 w-48 border border-slate-300/30 dark:border-white/5 rounded-full animate-[spin_25s_linear_infinite] pointer-events-none" />
-            <div className="absolute top-1/2 -right-12 h-72 w-72 border border-emerald-500/10 dark:border-emerald-500/5 rounded-full animate-[spin_40s_linear_infinite] pointer-events-none" />
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1, delay: 0.6 }}
+              className="rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 p-5 shadow-xl"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-purple-500/20 rounded-lg">
+                    <TruckIcon className="h-4 w-4 text-purple-300" />
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Active Logistics</span>
+                </div>
+                <span className="px-2 py-1 rounded bg-emerald-500/20 text-[10px] font-extrabold tracking-wide text-emerald-300 border border-emerald-500/20">
+                  EN ROUTE
+                </span>
+              </div>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-xl font-bold tracking-tight text-white">Nairobi Hub #4</p>
+                  <p className="text-sm text-slate-400 mt-1">Collection Progress: 84%</p>
+                </div>
+                <ChartBarIcon className="h-8 w-8 text-white/20" />
+              </div>
+            </motion.div>
           </div>
-
         </div>
       </div>
+
+      {/* Slider Controls */}
+      <div className="absolute bottom-8 left-0 right-0 z-30 flex justify-between items-center container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex gap-2">
+          {SLIDES.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSlide(idx)}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                currentSlide === idx ? "w-8 bg-emerald-400" : "w-2 bg-white/30 hover:bg-white/50"
+              }`}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
+        </div>
+        
+        <div className="flex gap-3">
+          <button 
+            onClick={prevSlide}
+            className="p-3 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-white hover:bg-white/20 transition-colors"
+          >
+            <ChevronLeftIcon className="h-5 w-5" />
+          </button>
+          <button 
+            onClick={nextSlide}
+            className="p-3 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-white hover:bg-white/20 transition-colors"
+          >
+            <ChevronRightIcon className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
     </section>
   );
 }

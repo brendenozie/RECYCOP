@@ -13,8 +13,10 @@ import {
   Squares2X2Icon,
   UserIcon,
   ArrowRightOnRectangleIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  TrashIcon
 } from "@heroicons/react/24/outline";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useAuth } from "./auth-context";
 
@@ -28,6 +30,7 @@ const NAV_LINKS = [
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [logoError, setLogoError] = useState(false);
   const { user, loading: authLoading, logout } = useAuth();
 
   const navigate = (url: string) => {
@@ -70,12 +73,34 @@ export function Navbar() {
         
         {/* BRAND LOGO */}
         <div onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer group">
-          <div className="p-2 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 group-hover:scale-105 transition-transform duration-200 shadow-sm">
-            <CpuChipIcon className="w-5 h-5 stroke-[2px]" />
-          </div>
-          <span className="text-lg sm:text-xl font-black tracking-tight text-slate-900 dark:text-white uppercase font-sans">
-            Recyc<span className="text-emerald-600 dark:text-emerald-400">Works</span>
-          </span>
+          {!logoError ? (
+            <div className="relative h-10 w-32 sm:w-40 transition-transform duration-200 group-hover:scale-105">
+              <Image 
+                src="/assets/logo.png" 
+                alt="RecycWorks Logo" 
+                fill 
+                priority
+                className={cn(
+                  "object-contain object-left", 
+                  // If you have a dark/light logo variant, you can toggle brightness here too
+                  isScrolled ? "dark:brightness-200" : "brightness-200 dark:brightness-200" 
+                )} 
+                onError={() => setLogoError(true)}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="p-2 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 group-hover:scale-105 transition-transform duration-200 shadow-sm">
+                <TrashIcon className="w-5 h-5 stroke-[2px]" />
+              </div>
+              <span className={cn(
+                "text-lg sm:text-xl font-black tracking-tight uppercase font-sans transition-colors",
+                isScrolled ? "text-slate-900 dark:text-white" : "text-white"
+              )}>
+                Recyc<span className="text-emerald-600 dark:text-emerald-400">Works</span>
+              </span>
+            </>
+          )}
         </div>
 
         {/* DESKTOP LINKS */}
@@ -84,7 +109,12 @@ export function Navbar() {
             <a
               key={link.name}
               href={link.href}
-              className="group relative py-1 text-sm font-semibold text-slate-600 dark:text-purple-100/70 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors duration-200"
+              className={cn(
+                "group relative py-1 text-sm font-semibold transition-colors duration-200",
+                isScrolled 
+                  ? "text-slate-600 dark:text-purple-100/70 hover:text-emerald-600 dark:hover:text-emerald-400"
+                  : "text-white/90 hover:text-white drop-shadow-sm" // White text when transparent
+              )}
             >
               {link.name}
               <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-emerald-500 dark:bg-emerald-400 transition-all duration-200 group-hover:w-full" />
@@ -95,12 +125,17 @@ export function Navbar() {
         {/* AUTHENTICATION ACTION BUTTONS */}
         <div className="hidden lg:flex items-center gap-2">
           {authLoading ? (
-            <div className="h-10 w-24 animate-pulse bg-slate-200 dark:bg-white/10 rounded-xl" />
+            <div className="h-10 w-24 animate-pulse bg-slate-200/50 dark:bg-white/10 rounded-xl" />
           ) : user ? (
             <>
               <button
                 onClick={() => navigate(getDashboardUrl())}
-                className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-purple-100/90 px-4 py-2 hover:text-emerald-600 dark:hover:text-white transition-colors"
+                className={cn(
+                  "flex items-center gap-2 text-sm font-bold px-4 py-2 transition-colors",
+                  isScrolled 
+                    ? "text-slate-700 dark:text-purple-100/90 hover:text-emerald-600 dark:hover:text-white"
+                    : "text-white hover:text-emerald-300 drop-shadow-sm"
+                )}
               >
                 <UserIcon className="w-4 h-4 stroke-[2px]" />
                 <span>Dashboard</span>
@@ -108,7 +143,12 @@ export function Navbar() {
               <button 
                 onClick={logout}
                 title="Log Out"
-                className="bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-red-400 p-2.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                className={cn(
+                  "p-2.5 rounded-xl transition-colors",
+                  isScrolled
+                    ? "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                    : "bg-white/10 text-white hover:bg-red-500/80 backdrop-blur-sm"
+                )}
               >
                 <ArrowRightOnRectangleIcon className="w-4 h-4 stroke-[2px]" />
               </button>
@@ -117,13 +157,18 @@ export function Navbar() {
             <>
               <button
                 onClick={() => navigate("/login")}
-                className="text-sm font-bold text-slate-700 dark:text-purple-100/90 px-4 py-2 hover:text-emerald-600 dark:hover:text-white transition-colors"
+                className={cn(
+                  "text-sm font-bold px-4 py-2 transition-colors",
+                  isScrolled 
+                    ? "text-slate-700 dark:text-purple-100/90 hover:text-emerald-600 dark:hover:text-white"
+                    : "text-white hover:text-emerald-300 drop-shadow-sm"
+                )}
               >
                 Sign In
               </button>
               <button 
                 onClick={() => navigate("/register")}
-                className="bg-slate-900 dark:bg-emerald-500 text-white dark:text-slate-950 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-emerald-600 dark:hover:bg-emerald-400 hover:scale-[1.01] active:scale-95 transition-all flex items-center gap-1.5 shadow-sm"
+                className="bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-emerald-600 hover:scale-[1.01] active:scale-95 transition-all flex items-center gap-1.5 shadow-sm"
               >
                 <span>Get Started</span>
                 <ArrowRightIcon className="w-3.5 h-3.5 stroke-[2.5px]" />
@@ -134,14 +179,19 @@ export function Navbar() {
 
         {/* MOBILE MENU TOGGLE */}
         <button 
-          className="lg:hidden p-2 text-slate-700 dark:text-emerald-400 bg-slate-100 dark:bg-white/5 rounded-xl transition-colors"
+          className={cn(
+            "lg:hidden p-2 rounded-xl transition-colors",
+            isScrolled 
+              ? "text-slate-700 dark:text-emerald-400 bg-slate-100 dark:bg-white/5"
+              : "text-white bg-white/10 backdrop-blur-sm"
+          )}
           onClick={() => setMobileMenuOpen(true)}
         >
           <Bars3Icon className="w-6 h-6 stroke-[2px]" />
         </button>
       </div>
 
-      {/* MOBILE DRAWER */}
+      {/* MOBILE DRAWER (Unchanged as it has its own fixed background) */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
@@ -162,9 +212,21 @@ export function Navbar() {
             >
               <div>
                 <div className="flex items-center justify-between mb-8">
-                  <span className="font-sans font-black text-xl text-slate-900 dark:text-white uppercase tracking-tight">
-                    Recyc<span className="text-emerald-600 dark:text-emerald-400">Works</span>
-                  </span>
+                  {!logoError ? (
+                    <div className="relative h-8 w-28">
+                      <Image 
+                        src="/assets/logo.png" 
+                        alt="RecycWorks Logo" 
+                        fill 
+                        className="object-contain object-left dark:brightness-200" 
+                        onError={() => setLogoError(true)}
+                      />
+                    </div>
+                  ) : (
+                    <span className="font-sans font-black text-xl text-slate-900 dark:text-white uppercase tracking-tight">
+                      Recyc<span className="text-emerald-600 dark:text-emerald-400">Works</span>
+                    </span>
+                  )}
                   <button 
                     onClick={() => setMobileMenuOpen(false)}
                     className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-700 dark:text-purple-200"
