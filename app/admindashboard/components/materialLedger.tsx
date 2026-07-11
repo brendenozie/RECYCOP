@@ -29,7 +29,9 @@ type Material = {
   grade: string;
   weight: string;
   supplier: string;
+  supplierId: string;
   driver: string;
+  driverId: string;
 };
 
 type DbRelationNode = { 
@@ -56,7 +58,9 @@ export function Inventory() {
   const [formGrade, setFormGrade] = useState("");
   const [formWeight, setFormWeight] = useState("");
   const [formSupplier, setFormSupplier] = useState("");
+  const [formSupplierId, setFormSupplierId] = useState("");
   const [formDriver, setFormDriver] = useState("");
+  const [formDriverId, setFormDriverId] = useState("");
 
   // Find the selected category object to extract its contextually nested grades array
   const activeCategoryNode = useMemo(() => {
@@ -120,7 +124,9 @@ export function Inventory() {
       setFormGrade(editingItem.grade);
       setFormWeight(editingItem.weight.replace(/[^\d.-]/g, ""));
       setFormSupplier(editingItem.supplier);
+      setFormSupplierId(editingItem.supplierId);
       setFormDriver(editingItem.driver);
+      setFormDriverId(editingItem.driverId);
     } else {
       clearFormFields();
     }
@@ -162,7 +168,9 @@ export function Inventory() {
       grade: formGrade,
       weight: formattedWeight,
       supplier: formSupplier,
+      supplierId: formSupplierId,
       driver: formDriver,
+      driverId: formDriverId
     };
 
     const isEdit = !!editingItem;
@@ -284,7 +292,7 @@ export function Inventory() {
                     {categories.map((cat) => (
                       <option key={cat._id} value={cat.name} className="dark:bg-slate-900">{cat.name}</option>
                     ))}
-                    {categories.length === 0 && (
+                    {/* {categories.length === 0 && (
                       <>
                         <option value="PP (Polypropylene)" className="dark:bg-slate-900">PP (Polypropylene)</option>
                         <option value="HDPE (High-Density Polyethylene)" className="dark:bg-slate-900">HDPE (High-Density Polyethylene)</option>
@@ -292,7 +300,7 @@ export function Inventory() {
                         <option value="Aluminum Closures" className="dark:bg-slate-900">Aluminum Closures</option>
                         <option value="Aluminum Cans (UBCs)" className="dark:bg-slate-900">Aluminum Cans (UBCs)</option>
                       </>
-                    )}
+                    )} */}
                   </select>
                 </div>
 
@@ -332,20 +340,26 @@ export function Inventory() {
                     <select 
                       required
                       value={formSupplier} 
-                      onChange={(e) => setFormSupplier(e.target.value)} 
+                      onChange={(e) => {
+                        setFormSupplierId(e.target.value);
+                        const selectedSupplier = suppliers.find(s => s.name === e.target.value);
+                        if (selectedSupplier) {
+                          setFormSupplier(selectedSupplier.name);
+                        }
+                      }} 
                       className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-hidden cursor-pointer focus:border-emerald-500"
                     >
                       <option value="">Choose Live Supplier Node</option>
                       {suppliers.map((sup) => (
                         <option key={sup._id} value={sup.name} className="dark:bg-slate-900">{sup.name}</option>
                       ))}
-                      {suppliers.length === 0 && (
+                      {/* {suppliers.length === 0 && (
                         <>
                           <option value="Alpha Aggregators" className="dark:bg-slate-900">Alpha Aggregators</option>
                           <option value="Coastal Plastics Ltd" className="dark:bg-slate-900">Coastal Plastics Ltd</option>
                           <option value="Eco-Metal Nairobi" className="dark:bg-slate-900">Eco-Metal Nairobi</option>
                         </>
-                      )}
+                      )} */}
                     </select>
                   </div>
 
@@ -353,7 +367,13 @@ export function Inventory() {
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Transit Dispatch Driver (Optional)</label>
                     <select 
                       value={formDriver} 
-                      onChange={(e) => setFormDriver(e.target.value)} 
+                      onChange={(e) =>{
+                        setFormDriverId(e.target.value);
+                        const selectedDriver = drivers.find(d => d.name === e.target.value);
+                        if (selectedDriver) {
+                          setFormDriver(selectedDriver.name);
+                        }
+                      }} 
                       className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-hidden cursor-pointer focus:border-emerald-500"
                     >
                       <option value="">No Active Driver (Stored Statically inside Warehouse)</option>
