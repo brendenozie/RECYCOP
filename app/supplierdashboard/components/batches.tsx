@@ -101,24 +101,24 @@ export function MyBatches() {
                 <span>Add New Batch</span>
               </>
             )}
-          </button>
+          </button> 
         </div>
 
         {/* --- FORM EXPANSION --- */}
-        <AnimatePresence>
-          {showForm && (
+         <AnimatePresence> 
+          {showForm && ( 
             <motion.div 
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/20"
             >
-              <div className="p-6">
-                <SupplierLedgerForm  />
+              <div className="p-6"> 
+                <SupplierLedgerForm onClose={() => setShowForm(false)} />
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </motion.div> 
+           )} 
+         </AnimatePresence> 
 
         {/* --- BATCH LIST & LOADING STATES --- */}
         <div className="divide-y divide-slate-100 dark:divide-slate-800">

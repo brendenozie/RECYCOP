@@ -25,13 +25,13 @@ type SystemUser = {
   name: string;
 };
 
-export function SupplierLedgerForm() {
+export function SupplierLedgerForm({ onClose }: { onClose: () => void }) {
   
   const { user, loading: authLoading } = useAuth();
 
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [drivers, setDrivers] = useState<SystemUser[]>([]);
-  const [suppliers, setSuppliers] = useState<SystemUser[]>([]);
+  // const [drivers, setDrivers] = useState<SystemUser[]>([]);
+  // const [suppliers, setSuppliers] = useState<SystemUser[]>([]);
   const [feedstockStreams, setFeedstockStreams] = useState<FeedstockOption[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -42,8 +42,8 @@ export function SupplierLedgerForm() {
   const [formName, setFormName] = useState("");
   const [formGrade, setFormGrade] = useState("");
   const [formWeight, setFormWeight] = useState("");
-  const [formDriver, setFormDriver] = useState("");
-  const [formSupplier, setFormSupplier] = useState("");
+  // const [formDriver, setFormDriver] = useState("");
+  // const [formSupplier, setFormSupplier] = useState("");
 
   // Derived available grades: Deduplicated and sorted alphabetically for clean presentation
   const availableGrades = Array.from(
@@ -58,7 +58,7 @@ export function SupplierLedgerForm() {
                               .flatMap((stream) => stream.grades)
                           )
                         ).sort((a, b) => a.localeCompare(b));
-
+                  
   // --- Sync contextual selections dynamically when the drawer mounts ---
   useEffect(() => {
     async function initializeFormContexts() {
@@ -77,30 +77,32 @@ export function SupplierLedgerForm() {
 
       
       try {
-        const [driversRes, feedstockRes, suppliersRes] = await Promise.all([
-          fetch("/api/admin/users?role=driver", {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          fetch("/api/admin/feedstock", {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          fetch("/api/admin/users?role=supplier", {
-            headers: { Authorization: `Bearer ${token}` }
-          })
+        const [feedstockRes] = await Promise.all([ //driversRes, feedstockRes, suppliersRes
+          // fetch("/api/admin/users?role=driver", {
+          //   headers: { Authorization: `Bearer ${token}` }
+          // }),
+          fetch("/api/admin/feedstock", 
+            // { headers: { Authorization: `Bearer ${token}` }}
+          ),
+          // fetch("/api/admin/users?role=supplier", {
+          //   headers: { Authorization: `Bearer ${token}` }
+          // })
         ]);
 
-        if (driversRes.ok) {
-          setDrivers(await driversRes.json());
-        }
+        // if (driversRes.ok) {
+        //   setDrivers(await driversRes.json());
+        // }
         
         if (feedstockRes.ok) {
           const streams: FeedstockOption[] = await feedstockRes.json();
+          console.log("Fetched feedstock streams:", streams);
           setFeedstockStreams(streams);
         }
 
-        if (suppliersRes.ok) {
-          setSuppliers(await suppliersRes.json());
-        }
+        // if (suppliersRes.ok) {
+        //   setSuppliers(await suppliersRes.json());
+        // }
+
       } catch (err) {
         toast.error("Failed to fetch operational parameters.");
       } finally {
@@ -140,12 +142,12 @@ export function SupplierLedgerForm() {
       name: formName,
       grade: formGrade,
       weight: formattedWeight,
-      driver: formDriver,
-      supplier: formSupplier 
+      // driver: formDriver,
+      // supplier: formSupplier 
     };
 
     try {
-      const response = await fetch("/api/admin/inventory", {
+      const response = await fetch("/api/supplier/inventory", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -157,14 +159,14 @@ export function SupplierLedgerForm() {
       if (!response.ok) throw new Error("Manifest creation rejected");
 
       toast.success("Shipment manifest logged into central ledger!");
-      setIsPanelOpen(false);
+      onClose(); // Close the drawer after successful submission
       
       // Clean state keys
       setFormName("");
       setFormGrade("");
       setFormWeight("");
-      setFormDriver("");
-      setFormSupplier("");
+      // setFormDriver("");
+      // setFormSupplier("");
     } catch (err) {
       toast.error("Failed to commit manifest parameters.");
     } finally {
@@ -174,8 +176,9 @@ export function SupplierLedgerForm() {
 
   return (
     <div className="p-6 max-w-xl mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
+     
+      <div className="flex items-ends mb-6">
+        {/* <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
             <ArchiveBoxIcon className="w-5 h-5" />
           </div>
@@ -183,19 +186,19 @@ export function SupplierLedgerForm() {
             <h2 className="text-lg font-bold">Delivery Manifest</h2>
             <p className="text-xs text-slate-400">Log new batch shipments bound for central processing.</p>
           </div>
-        </div>
-        <button 
+        </div> */}
+        {/* <button 
           onClick={() => setIsPanelOpen(true)}
           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
         >
           <PlusIcon className="w-4 h-4 stroke-[2.5px]" /> Create Manifest
-        </button>
+        </button> */}
       </div>
 
       <AnimatePresence>
-        {isPanelOpen && (
+        {(
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !isSubmitting && setIsPanelOpen(false)} className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !isSubmitting && setIsPanelOpen(false) && onClose()} className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50" />
             <motion.div 
               initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.2 }}
@@ -206,7 +209,7 @@ export function SupplierLedgerForm() {
                   <h3 className="text-xl font-bold">New Delivery Manifest</h3>
                   <p className="text-xs text-slate-400 mt-1">Declare cargo attributes matched to live feedstock stream indices.</p>
                 </div>
-                <button onClick={() => setIsPanelOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer">
+                <button onClick={() => { setIsPanelOpen(false); onClose(); }} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer">
                   <XMarkIcon className="w-5 h-5" />
                 </button>
               </div>
