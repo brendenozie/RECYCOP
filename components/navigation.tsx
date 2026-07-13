@@ -42,9 +42,10 @@ export function Navbar() {
     if (!user) return "/login";
     switch (user.role) {
       case "admin": return "/admindashboard";
+      case "hub-manager": return "/hubdashboard";
       case "driver": return "/driverdashboard";
       case "operations": return "/operationsdashboard";
-      case "fleet-operator": return "/fleetdashboard";
+      case "field-officer": return "/fieldOfficerdashboard";
       case "supplier": return "/supplierdashboard";
       default: return "/dashboard";
     }

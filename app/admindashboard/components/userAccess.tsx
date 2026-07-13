@@ -20,7 +20,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { PhoneIcon } from "lucide-react";
 
-export type UserRole = "admin" | "operations" | "supplier" | "driver";
+export type UserRole = "admin" | "operations" | "supplier" | "driver" | "fleet-";
 
 type AppUser = {
   _id?: string;
@@ -37,10 +37,11 @@ type AppUser = {
 
 const CATEGORIES = [
   { id: "all", name: "All Personnel", icon: UserGroupIcon },
-  { id: "Hub Manager", name: "Hub Managers", icon: WrenchScrewdriverIcon },
-  { id: "Operations", name: "Operations", icon: ShieldCheckIcon },
+  { id: "hub-manager", name: "Hub Managers", icon: WrenchScrewdriverIcon },
+  { id: "operations", name: "Operations", icon: ShieldCheckIcon },
   { id: "supplier", name: "Suppliers", icon: BuildingOfficeIcon },
   { id: "driver", name: "Logistics Drivers", icon: TruckIcon },
+  {id: "field-officer", name: "Field Officer", icon: TruckIcon}
 ];
 
 export function UserAccess() {
@@ -55,7 +56,7 @@ export function UserAccess() {
     lastName: "", 
     email: "",
     phoneNumber: "",
-    role: "Hub Manager", 
+    role: "hub-manager", 
     area: "Nairobi Central",
     status: "Active",
     verified: true
@@ -70,11 +71,11 @@ export function UserAccess() {
       // Robust localized mock data that maps directly to registration types & roles
       setUsers([
         // {
-        //   _id: "1", firstName: "Samuel", lastName: "Mwangi", role: "Hub Manager", area: "Nairobi Central", status: "Active", verified: true,
+        //   _id: "1", firstName: "Samuel", lastName: "Mwangi", role: "hub-manager", area: "Nairobi Central", status: "Active", verified: true,
         //   email: ""
         // },
         // {
-        //   _id: "2", firstName: "Grace", lastName: "Omondi", role: "Operations", area: "Mombasa Kilindini", status: "Active", verified: true,
+        //   _id: "2", firstName: "Grace", lastName: "Omondi", role: "operations", area: "Mombasa Kilindini", status: "Active", verified: true,
         //   email: ""
         // },
         // {
@@ -94,7 +95,7 @@ export function UserAccess() {
   // Open panel for clean addition
   const handleOpenAdd = () => {
     setEditingUser(null);
-    setFormData({id:"", firstName: "", lastName: "", email: "", phoneNumber: "", role: "Hub Manager", area: "Nairobi Central", status: "Active", verified: true });
+    setFormData({id:"", firstName: "", lastName: "", email: "", phoneNumber: "", role: "hub-manager", area: "Nairobi Central", status: "Active", verified: true });
     setIsPanelOpen(true);
   };
 
@@ -377,10 +378,11 @@ export function UserAccess() {
                       className="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-sm outline-hidden transition-all text-slate-900 dark:text-white font-medium cursor-pointer"
                       onChange={(e) => setFormData({...formData, role: e.target.value})}
                     >
-                      <option value="Hub Manager">Hub Manager</option>
-                      <option value="Operations">Operations Assistant</option>
+                      <option value="hub-manager">Hub Manager</option>
+                      <option value="operations">Operations Assistant</option>
                       <option value="supplier">Registered Supplier</option>
                       <option value="driver">Logistics Driver</option>
+                      <option value="field-officer">Field Officer</option>
                     </select>
                   </div>
 
