@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         {
           ...body,
           supplierId: new ObjectId(decoded.userId),
-          status: "Transit-Requested",
+          status: "transit-requested",
           requestedAt: new Date(),
           priority: body.totalWeight > 2000 ? "High" : "Normal",
         },
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
         },
         {
           $set: {
-            status: "Transit-Requested",
+            status: "transit-requested",
           },
         },
         { session },
