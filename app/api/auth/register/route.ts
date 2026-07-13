@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       email,
       phoneNumber,
       password,
-      role, // supplier | driver
+      role, // supplier | driver | hub-manager
       hubId, // Associated Kenyan Hub (e.g., Nairobi Central, Mombasa East)
     } = await request.json();
 

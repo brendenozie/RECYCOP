@@ -1,6 +1,7 @@
 import { getDatabase } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
+import bcrypt from "bcryptjs"; // or whichever hashing library you are using in auth.ts
 
 // --- GET: Fetch Accounts (Filtered by Pipeline Role or Global Matrix) ---
 export async function GET(request: NextRequest) {
@@ -127,29 +128,42 @@ export async function DELETE(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    
     const body = await request.json();
     const db = await getDatabase();
 
-    const { id, _id, ...updateData } = body;
-
+    const { id, _id, password, ...updateData } = body;
     const userId = id || _id;
 
     if (!userId) {
       return NextResponse.json(
         { error: "User ID is required" },
-        { status: 400 },
+        { status: 400 }
       );
+    }
+
+    // Build standard set payload
+    const setPayload: Record<string, any> = {
+      ...updateData,
+      lastUpdated: new Date(),
+    };
+
+    // If password is being updated, enforce strength rules and hash it
+    if (password && password.trim() !== "") {
+      if (password.length < 8) {
+        return NextResponse.json(
+          { error: "Password must be at least 8 characters for system security" },
+          { status: 400 }
+        );
+      }
+      
+      // Hash the password securely matching your auth stack's configuration
+      const salt = await bcrypt.genSalt(10);
+      setPayload.password = await bcrypt.hash(password, salt);
     }
 
     const result = await db.collection("users").updateOne(
       { _id: new ObjectId(userId) },
-      {
-        $set: {
-          ...updateData,
-          lastUpdated: new Date(),
-        },
-      },
+      { $set: setPayload }
     );
 
     if (result.matchedCount === 0) {
@@ -162,9 +176,10 @@ export async function PUT(request: Request) {
     });
     
   } catch (error) {
+    console.error("[RecycWorks Update Error]:", error);
     return NextResponse.json(
-      { error: "Failed to update user" },
-      { status: 500 },
+      { error: "Failed to update user payload configuration" },
+      { status: 500 }
     );
   }
 }

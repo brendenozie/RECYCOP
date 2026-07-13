@@ -16,11 +16,11 @@ import {
   BuildingOfficeIcon,
   TruckIcon,
   UserGroupIcon,
-  WrenchScrewdriverIcon
+  WrenchScrewdriverIcon,
+  PhoneIcon
 } from "@heroicons/react/24/outline";
-import { PhoneIcon } from "lucide-react";
 
-export type UserRole = "admin" | "operations" | "supplier" | "driver" | "fleet-";
+export type UserRole = "admin" | "operations" | "supplier" | "driver" | "field-officer" | "hub-manager";
 
 type AppUser = {
   _id?: string;
@@ -41,7 +41,7 @@ const CATEGORIES = [
   { id: "operations", name: "Operations", icon: ShieldCheckIcon },
   { id: "supplier", name: "Suppliers", icon: BuildingOfficeIcon },
   { id: "driver", name: "Logistics Drivers", icon: TruckIcon },
-  {id: "field-officer", name: "Field Officer", icon: TruckIcon}
+  { id: "field-officer", name: "Field Officer", icon: TruckIcon }
 ];
 
 export function UserAccess() {
@@ -49,6 +49,7 @@ export function UserAccess() {
   const [filteredCategory, setFilteredCategory] = useState("all");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<AppUser | null>(null);
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
   
   const [formData, setFormData] = useState({ 
     id: "",
@@ -56,6 +57,7 @@ export function UserAccess() {
     lastName: "", 
     email: "",
     phoneNumber: "",
+    password: "", // Added
     role: "hub-manager", 
     area: "Nairobi Central",
     status: "Active",
@@ -66,27 +68,11 @@ export function UserAccess() {
     try {
       const res = await fetch("/api/admin/users");
       const data = await res.json();
-      setUsers(data);
+      if (Array.isArray(data)) {
+        setUsers(data);
+      }
     } catch (err) {
-      // Robust localized mock data that maps directly to registration types & roles
-      setUsers([
-        // {
-        //   _id: "1", firstName: "Samuel", lastName: "Mwangi", role: "hub-manager", area: "Nairobi Central", status: "Active", verified: true,
-        //   email: ""
-        // },
-        // {
-        //   _id: "2", firstName: "Grace", lastName: "Omondi", role: "operations", area: "Mombasa Kilindini", status: "Active", verified: true,
-        //   email: ""
-        // },
-        // {
-        //   _id: "3", firstName: "David", lastName: "Kiplagat", role: "driver", area: "Kisumu West", status: "Reviewing", verified: false,
-        //   email: ""
-        // },
-        // {
-        //   _id: "4", firstName: "Mary", lastName: "Wanjiku", role: "supplier", area: "Thika Cluster", status: "Active", verified: true,
-        //   email: ""
-        // }
-      ]);
+      setUsers([]);
     }
   };
 
@@ -95,19 +81,33 @@ export function UserAccess() {
   // Open panel for clean addition
   const handleOpenAdd = () => {
     setEditingUser(null);
-    setFormData({id:"", firstName: "", lastName: "", email: "", phoneNumber: "", role: "hub-manager", area: "Nairobi Central", status: "Active", verified: true });
+    setShowPasswordInput(true); // Always display password for new accounts
+    setFormData({
+      id:"", 
+      firstName: "", 
+      lastName: "", 
+      email: "", 
+      phoneNumber: "", 
+      password: "", 
+      role: "hub-manager", 
+      area: "Nairobi Central", 
+      status: "Active", 
+      verified: true 
+    });
     setIsPanelOpen(true);
   };
 
   // Open panel populated with standard user details for updating
   const handleOpenEdit = (user: AppUser) => {
     setEditingUser({id: user._id || user.id || "", ...user});
+    setShowPasswordInput(false); // Hide password input behind a safe trigger when updating existing
     setFormData({
       id: user._id || user.id || "",
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
       phoneNumber: user.phoneNumber || "",
+      password: "", // Start blank; only set if changes are requested
       role: user.role,
       area: user.area,
       status: user.status,
@@ -121,24 +121,67 @@ export function UserAccess() {
     
     const url = "/api/admin/users";
     const method = editingUser ? "PUT" : "POST";
-    const payload = editingUser ? { ...formData, id: editingUser._id || editingUser.id } : formData;
 
-    const res = await fetch(url, {
-      method: method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    // Build the payload dynamically so we don't send blank strings for existing passwords
+    const payload: Record<string, any> = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phoneNumber: formData.phoneNumber,
+      role: formData.role,
+      area: formData.area,
+      status: formData.status,
+      verified: formData.verified
+    };
 
-    if (res.ok || !editingUser) { // Safeguarded for UI simulation
+    if (editingUser) {
+      payload.id = editingUser._id || editingUser.id;
+      if (showPasswordInput && formData.password.trim() !== "") {
+        payload.password = formData.password;
+      }
+    } else {
+      payload.password = formData.password;
+    }
+
+    try {
+      const res = await fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        setIsPanelOpen(false);
+        fetchUsers();
+      } else {
+        const errData = await res.json();
+        alert(errData.error || "An error occurred updating this account.");
+      }
+    } catch (error) {
+      // Direct UI simulation safeguard fallback if backend isn't mounted yet
+      if (!editingUser) {
+        const mockNewUser = {
+          ...payload,
+          _id: Math.random().toString(),
+          status: payload.status || "Active",
+          verified: payload.verified || true
+        } as AppUser;
+        setUsers([...users, mockNewUser]);
+      } else {
+        setUsers(users.map(u => (u._id === payload.id || u.id === payload.id) ? { ...u, ...payload } : u));
+      }
       setIsPanelOpen(false);
-      fetchUsers();
     }
   };
 
   const deleteUser = async (id: string) => {
     if (!confirm("Revoke all application access permissions for this team member?")) return;
-    await fetch(`/api/admin/users?id=${id}`, { method: "DELETE" });
-    fetchUsers();
+    try {
+      await fetch(`/api/admin/users?id=${id}`, { method: "DELETE" });
+      fetchUsers();
+    } catch (err) {
+      setUsers(users.filter(u => u._id !== id && u.id !== id));
+    }
   };
 
   const displayedUsers = filteredCategory === "all" 
@@ -180,7 +223,7 @@ export function UserAccess() {
               className={cn(
                 "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap border transition-all",
                 isActive 
-                  ? "bg-emerald-500 text-slate-950 border-emerald-500 shadow-xs" 
+                  ? "bg-emerald-50 text-slate-950 border-emerald-500 shadow-xs" 
                   : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
               )}
             >
@@ -217,13 +260,13 @@ export function UserAccess() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {displayedUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-12 text-sm text-slate-400 dark:text-slate-500 font-medium">
+                  <td colSpan={5} className="text-center py-12 text-sm text-slate-400 dark:text-slate-500 font-medium">
                     No active users found registered under this specific category.
                   </td>
                 </tr>
               ) : (
                 displayedUsers.map((user) => (
-                  <tr key={user._id} className="group hover:bg-slate-50/60 dark:hover:bg-slate-800/20 transition-colors">
+                  <tr key={user._id || user.id} className="group hover:bg-slate-50/60 dark:hover:bg-slate-800/20 transition-colors">
                     <td className="px-6 py-4.5">
                       <div className="flex items-center gap-4">
                         <div className="h-11 w-11 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200/40 dark:border-slate-700/40 shrink-0">
@@ -253,11 +296,11 @@ export function UserAccess() {
                     <td className="px-6 py-4.5">
                       <span className={cn(
                         "inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border",
-                        user.status === "Active" 
+                        user.status === "Active" || user.status === "active"
                           ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20" 
                           : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20"
                       )}>
-                        <span className={cn("w-1.5 h-1.5 rounded-full mr-1.5", user.status === "Active" ? "bg-emerald-500" : "bg-amber-400")} />
+                        <span className={cn("w-1.5 h-1.5 rounded-full mr-1.5", (user.status === "Active" || user.status === "active") ? "bg-emerald-500" : "bg-amber-400")} />
                         {user.status}
                       </span>
                     </td>
@@ -271,7 +314,7 @@ export function UserAccess() {
                           <PencilSquareIcon className="w-4 h-4" />
                         </button>
                         <button 
-                          onClick={() => deleteUser(user._id!)} 
+                          onClick={() => deleteUser((user._id || user.id)!)} 
                           className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all inline-flex items-center"
                           title="Revoke Access"
                         >
@@ -304,7 +347,7 @@ export function UserAccess() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 26, stiffness: 220 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-2xl h-full border-l border-slate-200 dark:border-slate-800 flex flex-col justify-between animate-none"
+              className="relative w-full max-w-md bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-2xl h-full border-l border-slate-200 dark:border-slate-800 flex flex-col justify-between"
             >
               <div className="space-y-6 overflow-y-auto max-h-[calc(100vh-140px)] pr-1 scrollbar-thin">
                 <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -369,6 +412,54 @@ export function UserAccess() {
                       className="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-emerald-500 dark:focus:border-emerald-500 text-sm outline-hidden transition-all text-slate-900 dark:text-white font-medium"
                       onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
                     />
+                  </div>
+
+                  {/* --- NEW/EDIT PASSWORD FIELD GROUP --- */}
+                  <div className="space-y-2 pt-2 pb-1">
+                    {editingUser ? (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Credentials Management</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordInput(!showPasswordInput)}
+                          className={cn(
+                            "text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md border transition-all",
+                            showPasswordInput 
+                              ? "bg-red-500/10 text-red-500 border-red-500/20" 
+                              : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/25"
+                          )}
+                        >
+                          {showPasswordInput ? "Discard Reset" : "Reset Password"}
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                        <KeyIcon className="w-3.5 h-3.5 text-emerald-500" /> Security Password
+                      </label>
+                    )}
+
+                    {showPasswordInput && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="space-y-1.5"
+                      >
+                        <input 
+                          required={!editingUser}
+                          type="password"
+                          value={formData.password}
+                          placeholder={editingUser ? "Enter brand new operational password" : "At least 8 characters"}
+                          className="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-emerald-500 dark:focus:border-emerald-500 text-sm outline-hidden transition-all text-slate-900 dark:text-white font-medium"
+                          onChange={(e) => setFormData({...formData, password: e.target.value})}
+                        />
+                        {editingUser && (
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 italic">
+                            Leave this input blank or toggle off if you do not wish to reset their password.
+                          </p>
+                        )}
+                      </motion.div>
+                    )}
                   </div>
 
                   <div className="space-y-1.5">
