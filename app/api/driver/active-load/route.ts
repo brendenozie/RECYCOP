@@ -46,7 +46,7 @@ export async function GET(request: Request) {
     const activeLoad = await db
       .collection("inventory")
       .findOne(
-        { driverId: new ObjectId(driverId), status: "Active" },
+        { driverId: new ObjectId(driverId), status: "dispatched" },
         { sort: { timestamp: -1 } },
       );
 

@@ -33,7 +33,7 @@ type Material = {
   supplierId: string;
   driver: string;
   driverId: string;
-  status: 'pending' | 'in-transit' | 'needs-review' | 'in-stock' | 'transit-requested';
+  status: 'pending' | 'in-transit' | 'needs-review' | 'in-stock' | 'transit-requested' | "dispatched" | "delivered" | "archived";
 };
 
 type DbRelationNode = { 
@@ -140,7 +140,13 @@ export function Inventory() {
         return { label: "Transit Requested", color: "text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/20 bg-purple-50 dark:bg-purple-500/10", icon: ClockIcon };
       case 'transit-requested':
         return { label: "Transit Requested", color: "text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/20 bg-purple-50 dark:bg-purple-500/10", icon: ClockIcon };
-      default:
+       case 'dispatched':
+        return { label: "Dispatched", color: "text-green-600 dark:text-green-400 border-green-200 dark:border-green-500/20 bg-green-50 dark:bg-green-500/10", icon: TruckIcon };
+      case 'delivered':
+        return { label: "Delivered", color: "text-green-600 dark:text-green-400 border-green-200 dark:border-green-500/20 bg-green-50 dark:bg-green-500/10", icon: CheckCircleIcon };
+      case 'archived':
+        return { label: "Archived", color: "text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-500/20 bg-gray-50 dark:bg-gray-500/10", icon: ArchiveBoxIcon };
+        default:
         return { label: "Pending", color: "text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-500/20 bg-slate-50 dark:bg-slate-500/10", icon: ArchiveBoxIcon };
     }
   };
@@ -149,7 +155,7 @@ export function Inventory() {
     e.preventDefault();
 
     const formattedWeight = formWeight.endsWith("t") ? formWeight : `${formWeight}t`;
-    const targetId = editingItem?.id || `MAT-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+    const targetId = editingItem?._id || editingItem?.id ||  `MAT-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
     
     // Safety check for automated rules (e.g. weight triggers)
     let finalStatus = formStatus;
@@ -171,7 +177,7 @@ export function Inventory() {
     };
 
     const isEdit = !!editingItem;
-    const method = isEdit ? "PATCH" : "POST";
+    const method = isEdit ? "PUT" : "POST";
     const url = isEdit ? `/api/admin/inventory/${editingItem._id || editingItem.id}` : "/api/admin/inventory";
 
     try {
@@ -339,7 +345,7 @@ export function Inventory() {
                         const val = e.target.value;
                         setFormSupplier(val);
                         const selectedSupplier = suppliers.find(s => s.name === val);
-                        setFormSupplierId(selectedSupplier ? selectedSupplier._id : "");
+                        setFormSupplierId(selectedSupplier ? selectedSupplier._id || selectedSupplier.id : "");
                       }} 
                       className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-none cursor-pointer focus:border-emerald-500"
                     >
@@ -358,7 +364,7 @@ export function Inventory() {
                         const val = e.target.value;
                         setFormDriver(val);
                         const selectedDriver = drivers.find(d => d.name === val);
-                        setFormDriverId(selectedDriver ? selectedDriver._id : "");
+                        setFormDriverId(selectedDriver ? selectedDriver._id || selectedDriver.id : "");
                       }} 
                       className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-none cursor-pointer focus:border-emerald-500"
                     >
@@ -379,9 +385,12 @@ export function Inventory() {
                     >
                       <option value="pending">Pending</option>
                       <option value="transit-requested">Transit Requested</option>
+                      <option value="dispatched">Dispatched</option>
                       <option value="in-transit">In Transit</option>
                       <option value="needs-review">Needs Review</option>
                       <option value="in-stock">In Stock</option>
+                      <option value="delivered">Delivered</option>
+                      <option value="archived">Archived</option>
                     </select>
                   </div>
                 </div>

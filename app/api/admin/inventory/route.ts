@@ -75,6 +75,8 @@ export async function POST(request: Request) {
       weight: body.weight, // e.g., "12.4t"
       supplier: body.supplier,
       driver: body.driver || "",
+      driverId: body.driverId || "",
+      supplierId: body.supplierId || "",
       status: body.status || "pending", // Default status for new entries pending would indicate they are awaiting further processing or review
       timestamp: new Date(),
     };
@@ -109,6 +111,49 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to record manifest payload configuration" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const db = await getDatabase();
+    const body = await request.json();
+
+    // Basic structural parameter validations
+    if (!body._id || !body.name || !body.grade || !body.weight || !body.supplier) {
+      return NextResponse.json(
+        {
+          error:
+            "Missing required inventory parameters (_id, name, grade, weight, supplier)",
+        },
+        { status: 400 },
+      );
+    }
+
+    const updateData = {
+      name: body.name,
+      grade: body.grade,
+      weight: body.weight,
+      supplier: body.supplier,
+      driver: body.driver || "",
+      driverId: body.driverId || "",
+      supplierId: body.supplierId || "",
+      status: body.status || "pending",
+      updatedAt: new Date(),
+    };
+
+    // Update the manifest in the central inventory tracking ledger
+    await db.collection("inventory").updateOne(
+      { _id: new ObjectId(body._id) },
+      { $set: updateData },
+    );
+
+    return NextResponse.json({ message: "Manifest updated successfully" });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to update manifest payload configuration" },
       { status: 500 },
     );
   }

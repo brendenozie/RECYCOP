@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
-import { verifyToken, } from "@/lib/auth"; // Wherever your auth file resides
+import { verifyToken } from "@/lib/auth"; // Wherever your auth file resides
 import { ObjectId } from "bson";
 
 export async function GET(request: NextRequest) {
@@ -44,15 +44,16 @@ export async function GET(request: NextRequest) {
     const inventory = await db
       .collection("inventory")
       .find({
-        driverId: new ObjectId(driverId),
+        driverId: driverId, // Ensure driverId is treated as a string if not an ObjectId new ObjectId(driverId) ||
         status: {
           $in: [
-            "Pending",
-            "Loaded",
-            "In Transit",
-            "Delivered",
-            "Canceled",
-            "Active",
+            // "pending",
+            // "loaded",
+            "dispatched",
+            // "in-transit",
+            // "delivered",
+            // "canceled",
+            // "active",
           ],
         },
       })
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
 
       return {
         _id: item._id.toString(),
-        status: item.status === "Active" ? "Pending" : item.status,
+        status: item.status === "active" ? "pending" : item.status,
 
         supplierName: item.supplier || "Unknown Supplier",
 
