@@ -31,8 +31,7 @@ export async function GET(request: Request) {
     const db = await getDatabase();
 
     // 2. Extract the user ID from the decoded token payload
-    // NOTE: Change `decoded.id` to `decoded.userId` or `decoded._id` depending on your JWT structure
-    const currentSupplierId = decoded.userId || decoded.id || decoded._id || null;
+    const currentSupplierId = decoded.userId || null;
 
     // 3. Query hubs where the supplierIds array contains the current user's ID
     const rawHubs = await db

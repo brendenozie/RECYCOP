@@ -124,8 +124,8 @@ export function SupplierOverview() {
     <div className="space-y-8">
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-3xl font-serif font-bold italic text-slate-900 dark:text-white">Jambo, Alpha Aggregators</h2>
-          <p className="text-slate-500 text-sm">Your collection center is performing <span className="text-emerald-500 font-bold">+12% better</span> than last month.</p>
+          <h2 className="text-3xl font-serif font-bold italic text-slate-900 dark:text-white">Jambo, {user?.firstName || ""}</h2>
+          <p className="text-slate-500 text-sm">Your collection center is performing <span className="text-emerald-500 font-bold">better</span> than last month.</p>
         </div>
         <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
            <CheckBadgeIcon className="w-6 h-6 text-emerald-500" />
@@ -157,22 +157,22 @@ export function SupplierOverview() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-serif italic mb-1 text-slate-900 dark:text-white">
-            Supplier <span className="text-emerald-600 dark:text-emerald-400 font-sans font-black uppercase tracking-tighter not-italic">Console</span>
+            Your<span className="text-emerald-600 dark:text-emerald-400 font-sans font-black uppercase tracking-tighter not-italic">Console</span>
           </h1>
           <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-purple-200/40 uppercase tracking-[0.2em] font-black">
             <MapPinIcon className="w-3 h-3 text-emerald-500" />
-            Nairobi Central Hub • Unit 04
+            Unit 
           </div>
         </div>
         
         <div className="flex items-center gap-3">
-          <button className="p-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 transition-all shadow-sm">
+          {/* <button className="p-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 transition-all shadow-sm">
             <EllipsisHorizontalIcon className="w-5 h-5 text-slate-600 dark:text-white" />
           </button>
           <button className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white dark:text-[#0a0118] dark:bg-emerald-500 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-all">
             <PlusIcon className="w-4 h-4 stroke-[3]" />
             New Log
-          </button>
+          </button> */}
         </div>
       </header>
 
