@@ -114,7 +114,7 @@ export function MyBatches() {
               className="overflow-hidden border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/20"
             >
               <div className="p-6"> 
-                <SupplierLedgerForm onClose={() => setShowForm(false)} />
+                <SupplierLedgerForm isPanelOpen={showForm} setIsPanelOpen={() => setShowForm(false)} />
               </div>
             </motion.div> 
            )} 

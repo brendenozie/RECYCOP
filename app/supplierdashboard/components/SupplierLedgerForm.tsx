@@ -25,11 +25,11 @@ type SystemUser = {
   name: string;
 };
 
-export function SupplierLedgerForm({ onClose }: { onClose: () => void }) {
+export function SupplierLedgerForm({ isPanelOpen, setIsPanelOpen }: { isPanelOpen: boolean; setIsPanelOpen: (isOpen: boolean) => void }) {
   
   const { user, loading: authLoading } = useAuth();
 
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  // const [isPanelOpen, setIsPanelOpen] = useState(false);
   // const [drivers, setDrivers] = useState<SystemUser[]>([]);
   // const [suppliers, setSuppliers] = useState<SystemUser[]>([]);
   const [feedstockStreams, setFeedstockStreams] = useState<FeedstockOption[]>([]);
@@ -75,29 +75,33 @@ export function SupplierLedgerForm({ onClose }: { onClose: () => void }) {
         return;
       }
 
-      
       try {
-        const [feedstockRes] = await Promise.all([ //driversRes, feedstockRes, suppliersRes
-          // fetch("/api/admin/users?role=driver", {
-          //   headers: { Authorization: `Bearer ${token}` }
-          // }),
-          fetch("/api/admin/feedstock", 
-            // { headers: { Authorization: `Bearer ${token}` }}
-          ),
-          // fetch("/api/admin/users?role=supplier", {
-          //   headers: { Authorization: `Bearer ${token}` }
-          // })
-        ]);
 
-        // if (driversRes.ok) {
-        //   setDrivers(await driversRes.json());
-        // }
-        
+        const feedstockRes = await fetch("/api/admin/feedstock", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
         if (feedstockRes.ok) {
           const streams: FeedstockOption[] = await feedstockRes.json();
           console.log("Fetched feedstock streams:", streams);
           setFeedstockStreams(streams);
         }
+
+        // const [feedstockRes] = await Promise.all([ //driversRes, feedstockRes, suppliersRes
+          // fetch("/api/admin/users?role=driver", {
+          //   headers: { Authorization: `Bearer ${token}` }
+          // }),
+          // fetch("/api/admin/feedstock", 
+          //   { headers: { Authorization: `Bearer ${token}` }}
+          // ),
+          // fetch("/api/admin/users?role=supplier", {
+          //   headers: { Authorization: `Bearer ${token}` }
+          // })
+        // ]);
+
+        // if (driversRes.ok) {
+        //   setDrivers(await driversRes.json());
+        // }
 
         // if (suppliersRes.ok) {
         //   setSuppliers(await suppliersRes.json());
@@ -112,7 +116,7 @@ export function SupplierLedgerForm({ onClose }: { onClose: () => void }) {
     }
 
     initializeFormContexts();
-  }, [user, authLoading]);
+  }, [isPanelOpen, user, authLoading]);
 
   // When a user selects a dynamic stream, reset the grade choice to force explicit selection
   const handleStreamChange = (streamName: string) => {
@@ -159,7 +163,7 @@ export function SupplierLedgerForm({ onClose }: { onClose: () => void }) {
       if (!response.ok) throw new Error("Manifest creation rejected");
 
       toast.success("Shipment manifest logged into central ledger!");
-      onClose(); // Close the drawer after successful submission
+      setIsPanelOpen(false); // Close the drawer after successful submission
       
       // Clean state keys
       setFormName("");
@@ -196,9 +200,9 @@ export function SupplierLedgerForm({ onClose }: { onClose: () => void }) {
       </div>
 
       <AnimatePresence>
-        {(
+        {isPanelOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !isSubmitting && setIsPanelOpen(false) && onClose()} className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !isSubmitting && setIsPanelOpen(false)} className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-50" />
             <motion.div 
               initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.2 }}
@@ -209,7 +213,7 @@ export function SupplierLedgerForm({ onClose }: { onClose: () => void }) {
                   <h3 className="text-xl font-bold">New Delivery Manifest</h3>
                   <p className="text-xs text-slate-400 mt-1">Declare cargo attributes matched to live feedstock stream indices.</p>
                 </div>
-                <button onClick={() => { setIsPanelOpen(false); onClose(); }} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer">
+                <button onClick={() => { setIsPanelOpen(false);}} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer">
                   <XMarkIcon className="w-5 h-5" />
                 </button>
               </div>
