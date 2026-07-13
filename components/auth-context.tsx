@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useSession, signOut } from 'next-auth/react';
 
 // Roles aligned with the RecycWorks "Wealth from Waste" model
-export type UserRole = "admin" | "operations" | "supplier" | "driver";
+export type UserRole = "admin" | "operations" | "supplier" | "driver" | "fleet-operator";
 
 export interface User {
   _id: string;
@@ -100,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (role === 'admin') destination = '/admindashboard';//admin/stats
     if (role === 'operations') destination = '/operationsdashboard';//ops/verification
     if (role === 'supplier') destination = '/supplierdashboard';//coop/ledger
+    if (role === 'fleet-operator') destination = '/fleetdashboard';//fleet/management
 
     window.location.href = destination;
   };

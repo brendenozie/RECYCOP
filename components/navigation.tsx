@@ -44,6 +44,7 @@ export function Navbar() {
       case "admin": return "/admindashboard";
       case "driver": return "/driverdashboard";
       case "operations": return "/operationsdashboard";
+      case "fleet-operator": return "/fleetdashboard";
       case "supplier": return "/supplierdashboard";
       default: return "/dashboard";
     }
