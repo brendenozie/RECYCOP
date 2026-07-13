@@ -95,3 +95,76 @@ export async function DELETE(request: Request) {
     );
   }
 }
+// export async function PATCH(request: Request) {
+//   try {
+//     const db = await getDatabase();
+//     const body = await request.json();
+
+//     if (!body._id) {
+//       return NextResponse.json(
+//         { error: "Target account token ID parameter required" },
+//         { status: 400 },
+//       );
+//     }
+
+//     const { _id, ...updateData } = body;
+
+//     const result = await db
+//       .collection("users")
+//       .updateOne(
+//         { _id: new ObjectId(_id) },
+//         { $set: { ...updateData, lastUpdated: new Date() } },
+//       );
+
+//     return NextResponse.json({ success: true });
+//   } catch (error) {
+//     return NextResponse.json(
+//       { error: "Failed to update user" },
+//       { status: 500 },
+//     );
+//   }
+// }
+
+export async function PUT(request: Request) {
+  try {
+    
+    const body = await request.json();
+    const db = await getDatabase();
+
+    const { id, _id, ...updateData } = body;
+
+    const userId = id || _id;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const result = await db.collection("users").updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          ...updateData,
+          lastUpdated: new Date(),
+        },
+      },
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      modified: result.modifiedCount,
+    });
+    
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to update user" },
+      { status: 500 },
+    );
+  }
+}

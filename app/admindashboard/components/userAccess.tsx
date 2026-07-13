@@ -18,13 +18,17 @@ import {
   UserGroupIcon,
   WrenchScrewdriverIcon
 } from "@heroicons/react/24/outline";
+import { PhoneIcon } from "lucide-react";
 
 export type UserRole = "admin" | "operations" | "supplier" | "driver";
 
 type AppUser = {
   _id?: string;
+  id?: string;
   firstName: string;
   lastName: string;
+  email: string;
+  phoneNumber?: string;
   role: UserRole | string;
   area: string;
   status: string;
@@ -46,8 +50,11 @@ export function UserAccess() {
   const [editingUser, setEditingUser] = useState<AppUser | null>(null);
   
   const [formData, setFormData] = useState({ 
+    id: "",
     firstName: "", 
     lastName: "", 
+    email: "",
+    phoneNumber: "",
     role: "Hub Manager", 
     area: "Nairobi Central",
     status: "Active",
@@ -62,10 +69,22 @@ export function UserAccess() {
     } catch (err) {
       // Robust localized mock data that maps directly to registration types & roles
       setUsers([
-        { _id: "1", firstName: "Samuel", lastName: "Mwangi", role: "Hub Manager", area: "Nairobi Central", status: "Active", verified: true },
-        { _id: "2", firstName: "Grace", lastName: "Omondi", role: "Operations", area: "Mombasa Kilindini", status: "Active", verified: true },
-        { _id: "3", firstName: "David", lastName: "Kiplagat", role: "driver", area: "Kisumu West", status: "Reviewing", verified: false },
-        { _id: "4", firstName: "Mary", lastName: "Wanjiku", role: "supplier", area: "Thika Cluster", status: "Active", verified: true }
+        // {
+        //   _id: "1", firstName: "Samuel", lastName: "Mwangi", role: "Hub Manager", area: "Nairobi Central", status: "Active", verified: true,
+        //   email: ""
+        // },
+        // {
+        //   _id: "2", firstName: "Grace", lastName: "Omondi", role: "Operations", area: "Mombasa Kilindini", status: "Active", verified: true,
+        //   email: ""
+        // },
+        // {
+        //   _id: "3", firstName: "David", lastName: "Kiplagat", role: "driver", area: "Kisumu West", status: "Reviewing", verified: false,
+        //   email: ""
+        // },
+        // {
+        //   _id: "4", firstName: "Mary", lastName: "Wanjiku", role: "supplier", area: "Thika Cluster", status: "Active", verified: true,
+        //   email: ""
+        // }
       ]);
     }
   };
@@ -75,16 +94,19 @@ export function UserAccess() {
   // Open panel for clean addition
   const handleOpenAdd = () => {
     setEditingUser(null);
-    setFormData({ firstName: "", lastName: "", role: "Hub Manager", area: "Nairobi Central", status: "Active", verified: true });
+    setFormData({id:"", firstName: "", lastName: "", email: "", phoneNumber: "", role: "Hub Manager", area: "Nairobi Central", status: "Active", verified: true });
     setIsPanelOpen(true);
   };
 
   // Open panel populated with standard user details for updating
   const handleOpenEdit = (user: AppUser) => {
-    setEditingUser(user);
+    setEditingUser({id: user._id || user.id || "", ...user});
     setFormData({
+      id: user._id || user.id || "",
       firstName: user.firstName,
       lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber || "",
       role: user.role,
       area: user.area,
       status: user.status,
@@ -98,7 +120,7 @@ export function UserAccess() {
     
     const url = "/api/admin/users";
     const method = editingUser ? "PUT" : "POST";
-    const payload = editingUser ? { ...formData, id: editingUser._id } : formData;
+    const payload = editingUser ? { ...formData, id: editingUser._id || editingUser.id } : formData;
 
     const res = await fetch(url, {
       method: method,
@@ -185,7 +207,8 @@ export function UserAccess() {
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 bg-slate-50/20 dark:bg-transparent">
                 <th className="px-6 py-4">User Details</th>
-                <th className="px-6 py-4">Coverage Zone</th>
+                <th className="px-6 py-4">Email</th>
+                <th className="px-6 py-4">Phone Number</th>
                 <th className="px-6 py-4">Network Status</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
@@ -217,7 +240,13 @@ export function UserAccess() {
                     <td className="px-6 py-4.5">
                       <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
                         <MapPinIcon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                        {user.area}
+                        {user.email}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4.5">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                        <PhoneIcon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                        {user.phoneNumber || "N/A"}
                       </div>
                     </td>
                     <td className="px-6 py-4.5">
@@ -316,7 +345,31 @@ export function UserAccess() {
                       onChange={(e) => setFormData({...formData, lastName: e.target.value})}
                     />
                   </div>
-                  
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Email Address</label>
+                    <input 
+                      required
+                      type="email"
+                      value={formData.email}
+                      placeholder="e.g. john.doe@example.com"
+                      className="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-emerald-500 dark:focus:border-emerald-500 text-sm outline-hidden transition-all text-slate-900 dark:text-white font-medium"
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Phone Number</label>
+                    <input 
+                      required
+                      type="tel"
+                      value={formData.phoneNumber}
+                      placeholder="e.g. +254 712 345 678"
+                      className="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-emerald-500 dark:focus:border-emerald-500 text-sm outline-hidden transition-all text-slate-900 dark:text-white font-medium"
+                      onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
+                    />
+                  </div>
+
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Workforce Category Role</label>
                     <select 

@@ -28,7 +28,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { title, vehiclePlate, driverName, checkpoints } = body;
+    const { title, vehiclePlate, driverId, driverName, checkpoints } = body;
 
     // Basic validation
     if (!title || !checkpoints || checkpoints.length === 0) {
@@ -48,6 +48,7 @@ export async function POST(req: Request) {
       id: `RT-${Math.floor(1000 + Math.random() * 9000)}`, // Custom ID generation
       title,
       vehiclePlate,
+      driverId,
       driverName,
       checkpoints,
       status: "Active", // Overall manifest status

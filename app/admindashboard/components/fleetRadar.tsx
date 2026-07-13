@@ -15,12 +15,17 @@ import {
   ArchiveBoxIcon,
   IdentificationIcon,
   KeyIcon,
-  UserCircleIcon,
-  PhoneIcon
+  UserCircleIcon
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 
 type VehicleStatus = "In Transit" | "Idle" | "Maintenance";
+
+type Driver = {
+  _id: string;
+  name: string;
+  phone: string;
+};
 
 type Vehicle = {
   id: string;
@@ -39,8 +44,8 @@ type Vehicle = {
   healthScore: number;
 };
 
-const availableHubs = ["Nairobi Central", "Mombasa Gateway", "Thika Industrial", "Kisumu North"];
-const cargoCategories = ["Post-Consumer PET Plastics", "Industrial Metal Scrap", "Mixed Recyclables", "Electronic Waste"];
+// const availableHubs = ["Nairobi Central", "Mombasa Gateway", "Thika Industrial", "Kisumu North"];
+// const cargoCategories = ["Post-Consumer PET Plastics", "Industrial Metal Scrap", "Mixed Recyclables", "Electronic Waste"];
 
 const initialVehicles: Vehicle[] = [
   { 
@@ -59,21 +64,20 @@ const initialVehicles: Vehicle[] = [
 
 export function Fleet() {
   const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
-  const [drivers, setDrivers] = useState([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [selectedDriver, setSelectedDriver] = useState<{ name: string; id: string; phone: string } | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [loading, setLoading] = useState(true);
+
   const activeUnits = vehicles.filter(v => v.status === "In Transit").length;
   const avgHealth = vehicles.length > 0 
     ? Math.round(vehicles.reduce((sum, v) => sum + v.healthScore, 0) / vehicles.length) 
     : 100;
 
-  const [loading, setLoading] = useState(true);
-
-   const fetchFleetData = async () => {
+  const fetchFleetData = async () => {
     setLoading(true);
     try {
-      // Fetch vehicles, drivers, and hubs concurrently
       const [resVehicles, resDrivers] = await Promise.all([
         fetch('/api/admin/fleet'),
         fetch('/api/admin/users?role=driver'),
@@ -88,26 +92,25 @@ export function Fleet() {
     }
   };
 
-
-  useEffect(() => {
-    fetchFleetData();
-  }, []);
-
   const handleSaveVehicle = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
     const payload = {
+      id: editingVehicle?.id || undefined,
       plate: formData.get("plate"),
       makeModel: formData.get("makeModel"),
       driver: {
-        name: selectedDriver?.name || formData.get("driverName"),
-        id: selectedDriver?.id || formData.get("driverId"),
-        phone: selectedDriver?.phone || formData.get("driverPhone"),
+        name: selectedDriver?.name || "",
+        id: selectedDriver?.id || "",
+        phone: selectedDriver?.phone || "",
       },
       assignedHub: formData.get("hub"),
       cargoType: formData.get("cargo"),
       status: editingVehicle ? editingVehicle.status : "Idle", 
+      progress: editingVehicle ? editingVehicle.progress : 0,
+      eta: editingVehicle ? editingVehicle.eta : "---",
+      healthScore: editingVehicle ? editingVehicle.healthScore : 100
     };
 
     try {
@@ -134,18 +137,29 @@ export function Fleet() {
       const res = await fetch(`/api/admin/fleet?id=${id}`, { method: 'DELETE' });
       if (res.ok) fetchFleetData();
     } catch (error) {
-      console.error("Delete failed");
+      console.error("Delete failed", error);
     }
   };
 
   const openPanel = (vehicle?: Vehicle) => {
-    setEditingVehicle(vehicle || null);
+    if (vehicle) {
+      setEditingVehicle(vehicle);
+      setSelectedDriver({
+        name: vehicle.driver.name,
+        id: vehicle.driver.id,
+        phone: vehicle.driver.phone
+      });
+    } else {
+      setEditingVehicle(null);
+      setSelectedDriver(null);
+    }
     setIsPanelOpen(true);
   };
 
   const closePanel = () => {
     setIsPanelOpen(false);
     setEditingVehicle(null);
+    setSelectedDriver(null);
   };
 
   useEffect(() => {
@@ -180,7 +194,7 @@ export function Fleet() {
                 <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                   {editingVehicle ? "Update Vehicle Record" : "Register New Vehicle"}
                 </h2>
-                <button onClick={closePanel} className="p-2 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-purple-100/70 hover:text-slate-800 dark:hover:text-white rounded-xl">
+                <button type="button" onClick={closePanel} className="p-2 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-purple-100/70 hover:text-slate-800 dark:hover:text-white rounded-xl">
                   <XMarkIcon className="w-5 h-5 stroke-[2px]" />
                 </button>
               </div>
@@ -206,39 +220,41 @@ export function Fleet() {
                     <label className="text-xs font-bold text-slate-400 dark:text-slate-500">Driver Assignment</label>
                   </div>
 
-                  {/* Dynamic Driver Selection from DB */}     
-                  <select name="driverName" className="w-full bg-slate-50 p-3 rounded-xl border"
+                  <select 
+                    name="driverName" 
+                    value={selectedDriver?.name || ""}
+                    required
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 font-semibold text-slate-800 dark:text-white outline-none focus:border-emerald-500 transition-colors"
                     onChange={(e) => {
-                      const selected = drivers.find((d: any) => d.name === e.target.value) as any | undefined;
+                      const selected = drivers.find((d) => d.name === e.target.value);
                       if (selected) {
-                        const sel: any = selected;
-                        setSelectedDriver({ name: sel.name, id: sel.licenseNo, phone: sel.phone });
+                        setSelectedDriver({ name: selected.name, id: selected._id, phone: selected.phone });
                       } else {
                         setSelectedDriver(null);
                       }
                     }}
                   >
-                    <option value="">Select Driver</option>
-                    {drivers.map((d: any) => <option key={d._id} value={d.name}>{d.name}</option>)}
+                    <option value="" className="dark:bg-[#0c0517]">Select Driver</option>
+                    {drivers.map((d) => (
+                      <option key={d._id} value={d.name} className="dark:bg-[#0c0517]">
+                        {d.name}
+                      </option>
+                    ))}
                   </select>
-                
-                  {/* <input name="driverName" placeholder="Driver Full Name" defaultValue={editingVehicle?.driver.name} required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 font-semibold text-slate-800 dark:text-white placeholder:text-slate-400 outline-none focus:border-emerald-500 transition-colors" />
-                  <div className="grid grid-cols-2 gap-3">
-                    <input name="driverId" placeholder="ID or License Number" defaultValue={editingVehicle?.driver.id} required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 font-semibold text-slate-800 dark:text-white placeholder:text-slate-400 outline-none focus:border-emerald-500 transition-colors" />
-                    <input name="driverPhone" placeholder="Phone Number" defaultValue={editingVehicle?.driver.phone} required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 font-semibold text-slate-800 dark:text-white placeholder:text-slate-400 outline-none focus:border-emerald-500 transition-colors" />
-                  </div> */}
                 </div>
 
-                {/* Section: Logistics Targets */}
+                {/* Section: Route & Cargo Settings */}
                 {/* <div className="space-y-3">
                   <div className="flex items-center gap-2 border-b border-slate-100 dark:border-white/5 pb-1.5">
                     <MapPinIcon className="w-4 h-4 text-emerald-500" />
                     <label className="text-xs font-bold text-slate-400 dark:text-slate-500">Route & Cargo Settings</label>
                   </div>
-                  <select name="hub" defaultValue={editingVehicle?.assignedHub} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 font-semibold text-slate-800 dark:text-white outline-none focus:border-emerald-500 transition-colors">
+                  <select name="hub" defaultValue={editingVehicle?.assignedHub || ""} required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 font-semibold text-slate-800 dark:text-white outline-none focus:border-emerald-500 transition-colors">
+                    <option value="" disabled className="dark:bg-[#0c0517]">Select Assigned Hub</option>
                     {availableHubs.map(hub => <option key={hub} value={hub} className="dark:bg-[#0c0517]">{hub}</option>)}
                   </select>
-                  <select name="cargo" defaultValue={editingVehicle?.cargoType} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 font-semibold text-slate-800 dark:text-white outline-none focus:border-emerald-500 transition-colors">
+                  <select name="cargo" defaultValue={editingVehicle?.cargoType || ""} required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 font-semibold text-slate-800 dark:text-white outline-none focus:border-emerald-500 transition-colors">
+                    <option value="" disabled className="dark:bg-[#0c0517]">Select Cargo Stream</option>
                     {cargoCategories.map(cat => <option key={cat} value={cat} className="dark:bg-[#0c0517]">{cat}</option>)}
                   </select>
                 </div> */}

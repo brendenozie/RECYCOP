@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
     const newAsset = {
       plate: body.plate?.toUpperCase(),
-      model: body.model,
+      makeModel: body.makeModel,
       capacity: body.capacity || "N/A",
       status: "Available",
       lastService: new Date(),
@@ -46,6 +46,42 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to register vehicle" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const db = await getDatabase();
+    const body = await request.json();
+
+    if (!body.id) {
+      return NextResponse.json(
+        { error: "Vehicle ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const updateData = {
+      ...body,
+      lastUpdated: new Date(),
+    };
+
+    delete updateData.id; // Remove id from update data
+
+    const result = await db
+      .collection("vehicles")
+      .updateOne({ _id: new ObjectId(body.id) }, { $set: updateData });
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: "Vehicle not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: "Vehicle updated successfully" });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to update vehicle" },
       { status: 500 },
     );
   }
