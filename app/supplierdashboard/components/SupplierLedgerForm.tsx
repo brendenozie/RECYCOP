@@ -3,15 +3,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ArchiveBoxIcon, 
-  PlusIcon,
   XMarkIcon,
   ArrowPathIcon
 } from "@heroicons/react/24/outline";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-context";
+import { InventoryBatch } from "./batches";
 
-// Explicit structure pulled from your feedstock architecture matrix
 type FeedstockOption = {
   _id: string;
   name: string;
@@ -19,22 +17,25 @@ type FeedstockOption = {
   grades: string[];
 };
 
-// Generic user type for drivers and suppliers
-type SystemUser = {
-  _id: string;
-  name: string;
-};
+interface SupplierLedgerFormProps {
+  isPanelOpen: boolean;
+  setIsPanelOpen: (isOpen: boolean) => void;
+  editingBatch?: InventoryBatch | null;
+  onSuccess?: () => void;
+}
 
-export function SupplierLedgerForm({ isPanelOpen, setIsPanelOpen }: { isPanelOpen: boolean; setIsPanelOpen: (isOpen: boolean) => void }) {
+export function SupplierLedgerForm({ 
+  isPanelOpen, 
+  setIsPanelOpen, 
+  editingBatch = null, 
+  onSuccess 
+}: SupplierLedgerFormProps) {
   
   const { user, loading: authLoading } = useAuth();
+  const isEditMode = !!editingBatch;
 
-  // const [isPanelOpen, setIsPanelOpen] = useState(false);
-  // const [drivers, setDrivers] = useState<SystemUser[]>([]);
-  // const [suppliers, setSuppliers] = useState<SystemUser[]>([]);
   const [feedstockStreams, setFeedstockStreams] = useState<FeedstockOption[]>([]);
   const [loading, setLoading] = useState(true);
-  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingStreams, setIsLoadingStreams] = useState(false);
 
@@ -42,30 +43,39 @@ export function SupplierLedgerForm({ isPanelOpen, setIsPanelOpen }: { isPanelOpe
   const [formName, setFormName] = useState("");
   const [formGrade, setFormGrade] = useState("");
   const [formWeight, setFormWeight] = useState("");
-  // const [formDriver, setFormDriver] = useState("");
-  // const [formSupplier, setFormSupplier] = useState("");
 
-  // Derived available grades: Deduplicated and sorted alphabetically for clean presentation
+  // Populate values cleanly if a batch is provided for editing
+  useEffect(() => {
+    if (editingBatch) {
+      setFormName(editingBatch.name);
+      setFormGrade(editingBatch.grade);
+      // Strip any non-numeric unit suffix to match target field configuration (e.g., "12.4t" -> "12.4")
+      const numericWeight = editingBatch.weight.replace(/[^\d.-]/g, "");
+      setFormWeight(numericWeight);
+    } else {
+      setFormName("");
+      setFormGrade("");
+      setFormWeight("");
+    }
+  }, [editingBatch, isPanelOpen]);
+
   const availableGrades = Array.from(
-                          new Set(
-                            feedstockStreams
-                              .filter(
-                                (stream) =>
-                                  stream.name === formName &&
-                                  Array.isArray(stream.grades) &&
-                                  stream.grades.length > 0
-                              )
-                              .flatMap((stream) => stream.grades)
-                          )
-                        ).sort((a, b) => a.localeCompare(b));
+    new Set(
+      feedstockStreams
+        .filter((stream) =>
+          stream.name === formName &&
+          Array.isArray(stream.grades) &&
+          stream.grades.length > 0
+        )
+        .flatMap((stream) => stream.grades)
+    )
+  ).sort((a, b) => a.localeCompare(b));
                   
-  // --- Sync contextual selections dynamically when the drawer mounts ---
   useEffect(() => {
     async function initializeFormContexts() {
       if (!isPanelOpen) return;
       setIsLoadingStreams(true);
 
-      // Wait until global auth loading finishes and ensure a valid user session exists
       if (authLoading || !user) return;
 
       const token = localStorage.getItem('token');
@@ -76,37 +86,14 @@ export function SupplierLedgerForm({ isPanelOpen, setIsPanelOpen }: { isPanelOpe
       }
 
       try {
-
         const feedstockRes = await fetch("/api/admin/feedstock", {
           headers: { Authorization: `Bearer ${token}` }
         });
 
         if (feedstockRes.ok) {
           const streams: FeedstockOption[] = await feedstockRes.json();
-          console.log("Fetched feedstock streams:", streams);
           setFeedstockStreams(streams);
         }
-
-        // const [feedstockRes] = await Promise.all([ //driversRes, feedstockRes, suppliersRes
-          // fetch("/api/admin/users?role=driver", {
-          //   headers: { Authorization: `Bearer ${token}` }
-          // }),
-          // fetch("/api/admin/feedstock", 
-          //   { headers: { Authorization: `Bearer ${token}` }}
-          // ),
-          // fetch("/api/admin/users?role=supplier", {
-          //   headers: { Authorization: `Bearer ${token}` }
-          // })
-        // ]);
-
-        // if (driversRes.ok) {
-        //   setDrivers(await driversRes.json());
-        // }
-
-        // if (suppliersRes.ok) {
-        //   setSuppliers(await suppliersRes.json());
-        // }
-
       } catch (err) {
         toast.error("Failed to fetch operational parameters.");
       } finally {
@@ -118,41 +105,42 @@ export function SupplierLedgerForm({ isPanelOpen, setIsPanelOpen }: { isPanelOpe
     initializeFormContexts();
   }, [isPanelOpen, user, authLoading]);
 
-  // When a user selects a dynamic stream, reset the grade choice to force explicit selection
   const handleStreamChange = (streamName: string) => {
     setFormName(streamName);
-    setFormGrade(""); // Clears the previous state so the user must actively select the sorting grade
+    setFormGrade(""); 
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Wait until global auth loading finishes and ensure a valid user session exists
-      if (authLoading || !user) return;
+    if (authLoading || !user) return;
 
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error("No authorization token discovered in localStorage.");
-        setLoading(false);
-        return;
-      }
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error("No authorization token discovered in localStorage.");
+      setLoading(false);
+      return;
+    }
 
-
-    // Format parameter to match your standard architecture backend formatting (e.g., "12.4t")
     const formattedWeight = `${formWeight.replace(/[^\d.-]/g, "")}t`;
 
     const payload = {
       name: formName,
       grade: formGrade,
       weight: formattedWeight,
-      // driver: formDriver,
-      // supplier: formSupplier 
     };
 
     try {
-      const response = await fetch("/api/supplier/inventory", {
-        method: "POST",
+      // Determine request pathing configurations based on operation profile modes
+      const targetUrl = isEditMode 
+        ? `/api/supplier/inventory/${editingBatch?._id}` 
+        : "/api/supplier/inventory";
+
+      const targetMethod = isEditMode ? "PUT" : "POST";
+
+      const response = await fetch(targetUrl, {
+        method: targetMethod,
         headers: { 
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
@@ -160,17 +148,12 @@ export function SupplierLedgerForm({ isPanelOpen, setIsPanelOpen }: { isPanelOpe
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error("Manifest creation rejected");
+      if (!response.ok) throw new Error("Manifest update transaction rejected");
 
-      toast.success("Shipment manifest logged into central ledger!");
-      setIsPanelOpen(false); // Close the drawer after successful submission
+      toast.success(isEditMode ? "Batch manifest tracking updated!" : "Shipment manifest logged into central ledger!");
+      setIsPanelOpen(false); 
       
-      // Clean state keys
-      setFormName("");
-      setFormGrade("");
-      setFormWeight("");
-      // setFormDriver("");
-      // setFormSupplier("");
+      if (onSuccess) onSuccess();
     } catch (err) {
       toast.error("Failed to commit manifest parameters.");
     } finally {
@@ -180,25 +163,6 @@ export function SupplierLedgerForm({ isPanelOpen, setIsPanelOpen }: { isPanelOpe
 
   return (
     <div className="p-6 max-w-xl mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
-     
-      <div className="flex items-ends mb-6">
-        {/* <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-            <ArchiveBoxIcon className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold">Delivery Manifest</h2>
-            <p className="text-xs text-slate-400">Log new batch shipments bound for central processing.</p>
-          </div>
-        </div> */}
-        {/* <button 
-          onClick={() => setIsPanelOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
-        >
-          <PlusIcon className="w-4 h-4 stroke-[2.5px]" /> Create Manifest
-        </button> */}
-      </div>
-
       <AnimatePresence>
         {isPanelOpen && (
           <>
@@ -210,10 +174,10 @@ export function SupplierLedgerForm({ isPanelOpen, setIsPanelOpen }: { isPanelOpe
             >
               <div className="flex justify-between items-center mb-8">
                 <div>
-                  <h3 className="text-xl font-bold">New Delivery Manifest</h3>
+                  <h3 className="text-xl font-bold">{isEditMode ? "Modify Batch Parameters" : "New Delivery Manifest"}</h3>
                   <p className="text-xs text-slate-400 mt-1">Declare cargo attributes matched to live feedstock stream indices.</p>
                 </div>
-                <button onClick={() => { setIsPanelOpen(false);}} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer">
+                <button type="button" onClick={() => setIsPanelOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer">
                   <XMarkIcon className="w-5 h-5" />
                 </button>
               </div>
@@ -225,22 +189,6 @@ export function SupplierLedgerForm({ isPanelOpen, setIsPanelOpen }: { isPanelOpe
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5 text-sm text-slate-900 dark:text-white">
-                  
-                  {/* <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Originating Supplier</label>
-                    <select 
-                      required 
-                      value={formSupplier} 
-                      onChange={(e) => setFormSupplier(e.target.value)} 
-                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold focus:border-emerald-500 outline-hidden text-slate-900 dark:text-white"
-                    >
-                      <option value="">Select source supplier...</option>
-                      {suppliers.map((sup) => (
-                        <option key={sup._id} value={sup._id}>{sup.name}</option>
-                      ))}
-                    </select>
-                  </div> */}
-
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Material Stream Class</label>
                     <select 
@@ -274,7 +222,6 @@ export function SupplierLedgerForm({ isPanelOpen, setIsPanelOpen }: { isPanelOpe
                         <option value="">Select a stream first...</option>
                       ) : (
                         <>
-                          {/* The default placeholder forces the operator to make a selection */}
                           <option value="">Select quality grade...</option>
                           {availableGrades.map((grade, idx) => (
                             <option key={`grade-${idx}`} value={grade}>
@@ -294,20 +241,6 @@ export function SupplierLedgerForm({ isPanelOpen, setIsPanelOpen }: { isPanelOpe
                     </div>
                   </div>
 
-                  {/* <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Assigned Courier Driver</label>
-                    <select 
-                      value={formDriver} 
-                      onChange={(e) => setFormDriver(e.target.value)} 
-                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold focus:border-emerald-500 outline-hidden text-slate-900 dark:text-white"
-                    >
-                      <option value="">No Driver (Drop-off / Self-delivery)</option>
-                      {drivers.map((drv) => (
-                        <option key={drv._id} value={drv.name}>{drv.name}</option>
-                      ))}
-                    </select>
-                  </div> */}
-
                   <button 
                     type="submit" 
                     disabled={isSubmitting}
@@ -315,10 +248,10 @@ export function SupplierLedgerForm({ isPanelOpen, setIsPanelOpen }: { isPanelOpe
                   >
                     {isSubmitting ? (
                       <>
-                        <ArrowPathIcon className="w-4 h-4 animate-spin" /> Submitting Manifest...
+                        <ArrowPathIcon className="w-4 h-4 animate-spin" /> Committing Parameters...
                       </>
                     ) : (
-                      "Submit Manifest"
+                      <span>{isEditMode ? "Save Parameter Changes" : "Submit Manifest"}</span>
                     )}
                   </button>
                 </form>

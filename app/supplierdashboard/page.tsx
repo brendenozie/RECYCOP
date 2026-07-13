@@ -24,8 +24,8 @@ export default function SupplierDashboard({ userToken }: { userToken: string }) 
   const menuItems = [
     { id: "overview", label: "Command", icon: Squares2X2Icon },
     { id: "batches", label: "Batches", icon: CubeIcon },
-    { id: "finance", label: "Earnings", icon: CurrencyDollarIcon },
-    { id: "impact", label: "Impact", icon: ChartBarIcon },
+    // { id: "finance", label: "Earnings", icon: CurrencyDollarIcon },
+    // { id: "impact", label: "Impact", icon: ChartBarIcon },
   ];
   
 
@@ -189,11 +189,11 @@ export default function SupplierDashboard({ userToken }: { userToken: string }) 
                 {/* Pass userToken to all injected views to securely resolve queries. 
                   This aligns seamlessly with your recent architectural update. 
                 */}
-                {activeTab === "overview" && <SupplierOverview userToken={userToken} />}
-                {activeTab === "impact" && <MyImpact userToken={userToken} />}
+                {activeTab === "overview" && <SupplierOverview />}
+                {/* {activeTab === "impact" && <MyImpact />} */}
                 {activeTab === "batches" && <MyBatches />}
-                {activeTab === "pickup" && <RequestPickup userToken={userToken} />}
-                {activeTab === "finance" && <FinancePortal userToken={userToken} />}
+                {activeTab === "pickup" && <RequestPickup />}
+                {/* {activeTab === "finance" && <FinancePortal />} */}
               </motion.div>
             </AnimatePresence>
           </div>

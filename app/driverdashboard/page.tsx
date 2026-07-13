@@ -43,7 +43,7 @@ const menuItems = [
 
 export default function DriverMobileDashboard() {
   
-    const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
     
   const [activeTab, setActiveTab] = useState("loads"); 
   const [loads, setLoads] = useState<InventoryLoad[]>([]);
@@ -58,7 +58,12 @@ export default function DriverMobileDashboard() {
   useEffect(() => {
     async function fetchAssignedLoads() {
        // Wait until global auth loading finishes and ensure a valid user session exists
-      if (authLoading || !user) return;
+      if (authLoading) return;
+
+      if (!user) {
+          setLoading(false);
+          return;
+      }
 
       const token = localStorage.getItem('token');
       if (!token) {
@@ -75,18 +80,21 @@ export default function DriverMobileDashboard() {
             "Content-Type": "application/json"
           }
         });
-        if (res.ok) {
-          const data = await res.json();
-          setLoads(data);
-        } else {
-          throw new Error("Failed to fetch");
+
+        if (!res.ok) {
+            console.error(await res.text());
+            throw new Error("Failed to fetch assigned loads");
         }
+
+        const data = await res.json();
+        setLoads(data);
+
       } catch (err) {
         // Fallback mock data for UI demonstration if API fails
-        setLoads([
-          { _id: "INV-9921", status: "Pending", supplierName: "Alpha Recyclers", totalWeight: 4500, vehicle: "KDK 442Z", hub: "Nairobi Core Hub", grade: "Premium Clear", name: "PET-A Flakes" },
-          { _id: "INV-9922", status: "Pending", supplierName: "Industrial Scrap Co", totalWeight: 12000, vehicle: "KDK 442Z", hub: "Industrial Area Depot", grade: "Mixed", name: "HDPE Rigid" }
-        ]);
+        // setLoads([
+        //   { _id: "INV-9921", status: "Pending", supplierName: "Alpha Recyclers", totalWeight: 4500, vehicle: "KDK 442Z", hub: "Nairobi Core Hub", grade: "Premium Clear", name: "PET-A Flakes" },
+        //   { _id: "INV-9922", status: "Pending", supplierName: "Industrial Scrap Co", totalWeight: 12000, vehicle: "KDK 442Z", hub: "Industrial Area Depot", grade: "Mixed", name: "HDPE Rigid" }
+        // ]);
       } finally {
         setLoading(false);
       }

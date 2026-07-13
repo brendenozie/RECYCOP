@@ -7,14 +7,16 @@ import {
   PlusIcon, 
   XMarkIcon,
   ArrowPathIcon,
-  InboxIcon
+  InboxIcon,
+  PencilIcon,
+  TrashIcon
 } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { SupplierLedgerForm } from "./SupplierLedgerForm";
 import { useAuth } from "@/components/auth-context";
 
-type InventoryBatch = {
+export type InventoryBatch = {
   _id: string;
   name: string;
   weight: string;
@@ -28,40 +30,66 @@ export function MyBatches() {
   const [batches, setBatches] = useState<InventoryBatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingBatch, setEditingBatch] = useState<InventoryBatch | null>(null);
 
-  useEffect(() => {
-    async function syncWarehouseStock() {
-      // Wait until global auth loading finishes and ensure a valid user session exists
-      if (authLoading || !user) return;
+  async function syncWarehouseStock() {
+    if (authLoading || !user) return;
 
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error("No authorization token discovered in localStorage.");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const res = await fetch("/api/supplier/inventory", {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        });
-        
-        if (!res.ok) throw new Error("Failed to synchronize inventory");
-        
-        const data = await res.json();
-        setBatches(data);
-      } catch (err) {
-        toast.error("Could not update live warehouse inventory.");
-      } finally {
-        setLoading(false);
-      }
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error("No authorization token discovered in localStorage.");
+      setLoading(false);
+      return;
     }
 
+    try {
+      const res = await fetch("/api/supplier/inventory", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+      
+      if (!res.ok) throw new Error("Failed to synchronize inventory");
+      
+      const data = await res.json();
+      setBatches(data);
+    } catch (err) {
+      toast.error("Could not update live warehouse inventory.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
     syncWarehouseStock();
   }, [user, authLoading]);
+
+  const handleEditClick = (batch: InventoryBatch) => {
+    setEditingBatch(batch);
+    setShowForm(true);
+  };
+
+  const handleDeleteClick = async (batchId: string) => {
+    if (!confirm("Are you sure you want to completely remove this batch assignment?")) return;
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/supplier/inventory/${batchId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) throw new Error("Batch deletion failed");
+
+      toast.success("Inventory item deleted successfully.");
+      syncWarehouseStock();
+    } catch (err) {
+      toast.error("Failed to eliminate ledger batch item.");
+    }
+  };
 
   if (authLoading || loading) return <div>Syncing warehouse records...</div>;
 
@@ -82,7 +110,14 @@ export function MyBatches() {
           </div>
           
           <button 
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => {
+              if (showForm) {
+                setShowForm(false);
+                setEditingBatch(null);
+              } else {
+                setShowForm(true);
+              }
+            }}
             className={cn(
               "w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm focus:outline-hidden focus:ring-2 focus:ring-offset-2",
               showForm 
@@ -114,22 +149,27 @@ export function MyBatches() {
               className="overflow-hidden border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/20"
             >
               <div className="p-6"> 
-                <SupplierLedgerForm isPanelOpen={showForm} setIsPanelOpen={() => setShowForm(false)} />
+                <SupplierLedgerForm 
+                  isPanelOpen={showForm} 
+                  setIsPanelOpen={(isOpen) => {
+                    setShowForm(isOpen);
+                    if (!isOpen) setEditingBatch(null);
+                  }} 
+                  editingBatch={editingBatch}
+                  onSuccess={() => {
+                    syncWarehouseStock();
+                    setShowForm(false);
+                    setEditingBatch(null);
+                  }}
+                />
               </div>
             </motion.div> 
            )} 
          </AnimatePresence> 
 
-        {/* --- BATCH LIST & LOADING STATES --- */}
+        {/* --- BATCH LIST --- */}
         <div className="divide-y divide-slate-100 dark:divide-slate-800">
-          {loading ? (
-            <div className="py-16 flex flex-col items-center justify-center gap-3">
-              <ArrowPathIcon className="w-6 h-6 animate-spin text-emerald-600 dark:text-emerald-500" />
-              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-                Loading warehouse items...
-              </p>
-            </div>
-          ) : batches.length === 0 ? (
+          {batches.length === 0 ? (
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }}
@@ -151,7 +191,8 @@ export function MyBatches() {
                     <th className="py-3 px-6">Batch Details</th>
                     <th className="py-3 px-6 hidden sm:table-cell">Weight</th>
                     <th className="py-3 px-6 hidden sm:table-cell">Grade</th>
-                    <th className="py-3 px-6 text-right">Status</th>
+                    <th className="py-3 px-6">Status</th>
+                    <th className="py-3 px-6 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -178,7 +219,6 @@ export function MyBatches() {
                                   {batch._id.slice(-6).toUpperCase()}
                                 </span>
                               </div>
-                              {/* Mobile-only secondary context row */}
                               <div className="sm:hidden text-xs text-slate-500 dark:text-slate-400 mt-1 space-x-2">
                                 <span>Weight: <strong className="text-slate-700 dark:text-slate-300">{batch.weight}</strong></span>
                                 <span>•</span>
@@ -201,7 +241,7 @@ export function MyBatches() {
                         </td>
 
                         {/* Column 4: Status */}
-                        <td className="py-4 px-6 text-right">
+                        <td className="py-4 px-6">
                           <span className={cn(
                             "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border",
                             batch.status === "Stored" 
@@ -210,6 +250,26 @@ export function MyBatches() {
                           )}>
                             {batch.status}
                           </span>
+                        </td>
+
+                        {/* Column 5: Actions */}
+                        <td className="py-4 px-6 text-right text-sm font-medium">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleEditClick(batch)}
+                              className="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                              title="Edit Batch"
+                            >
+                              <PencilIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(batch._id)}
+                              className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                              title="Delete Batch"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </motion.tr>
                     ))}
