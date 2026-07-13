@@ -62,7 +62,7 @@ export function RequestPickup() {
         };
 
         const [batchesRes, hubsRes] = await Promise.all([
-          fetch(`/api/supplier/inventory`, { headers }),
+          fetch(`/api/supplier/inventory?status=pending`, { headers }),
           fetch(`/api/supplier/hubs`, { headers }) // Adjust endpoint to your routing structure
         ]);
 
@@ -184,14 +184,23 @@ export function RequestPickup() {
               disabled={availableHubs.length === 0}
               className="w-full bg-slate-100 dark:bg-white/5 border-none rounded-2xl p-5 text-sm outline-none font-bold appearance-none transition-colors focus:ring-2 ring-emerald-500/20 text-slate-900 dark:text-white"
             >
+              
               {availableHubs.length === 0 ? (
-                <option value="">No Hubs Available</option>
+                <option value="">Select a Hub</option>
               ) : (
-                availableHubs.map((hub: any) => (
-                  <option key={hub._id} value={hub._id}>
-                    {hub.name} {hub.location ? `— ${hub.location.country}-${hub.location.city}` : ""}
-                  </option>
-                ))
+                  availableHubs.length <= 0 ? (
+                    <option value="">Loading hubs...</option>
+                  ) : (
+                    <>
+                      {/* first option is a placeholder */}
+                      <option value="">Select a Hub</option>
+                      {availableHubs.map((hub: any) => (
+                        <option key={hub._id} value={hub._id}>
+                          {hub.name} {hub.location ? `— ${hub.location.country}-${hub.location.city}` : ""}
+                        </option>
+                      ))}
+                    </>
+                  )
               )}
             </select>
           </div>

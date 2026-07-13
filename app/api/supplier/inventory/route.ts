@@ -6,6 +6,10 @@ import { ObjectId } from "mongodb";
 // --- GET: Fetch All Material Manifests ---
 export async function GET(request: Request) {
   try {
+    
+    const url = new URL(request.url);
+    const statusFilter = url.searchParams.get("status");
+
     // 1. Authenticate via Bearer Token or Cookie
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.startsWith("Bearer ")
@@ -27,12 +31,19 @@ export async function GET(request: Request) {
       );
     }
 
+
     const db = await getDatabase();
+    let query: Record<string, any> = {};
+    if (statusFilter) {
+      query.status = statusFilter;
+    }
+
     // Fetch items sorted by newest first
     const items = await db
       .collection("inventory")
       .find({
         supplierId: new ObjectId(decoded.userId),
+        ...query
       })
       .sort({ timestamp: -1 })
       .toArray();

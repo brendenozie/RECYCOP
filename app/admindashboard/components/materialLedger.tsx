@@ -32,6 +32,7 @@ type Material = {
   supplierId: string;
   driver: string;
   driverId: string;
+  status: 'pending' | 'in-transit' | 'needs-review' | 'in-stock' | 'transit-requested';
 };
 
 type DbRelationNode = { 
@@ -61,6 +62,7 @@ export function Inventory() {
   const [formSupplierId, setFormSupplierId] = useState("");
   const [formDriver, setFormDriver] = useState("");
   const [formDriverId, setFormDriverId] = useState("");
+  const [formStatus, setFormStatus] = useState<Material['status']>('pending');
 
   // Find the selected category object to extract its contextually nested grades array
   const activeCategoryNode = useMemo(() => {
@@ -69,11 +71,11 @@ export function Inventory() {
 
   // Fallback static configuration matrix matching your UI defaults
   const fallbackGradesMap: Record<string, string[]> = {
-    "PP (Polypropylene)": ["Rigid Plastics", "Bottle Caps", "Post-Industrial Scrap"],
-    "HDPE (High-Density Polyethylene)": ["Blow Molded Bottles", "Crushed Flakes", "Unrefined Regrind"],
-    "LDPE (Low-Density Polyethylene)": ["Clear Film Liners", "Colored Film Bales"],
-    "Aluminum Closures": ["UBC Taint Tabor", "Litho Sheet Scrap"],
-    "Aluminum Cans (UBCs)": ["Shredded UBC Bales", "Dense Clean Briquettes"]
+    // "PP (Polypropylene)": ["Rigid Plastics", "Bottle Caps", "Post-Industrial Scrap"],
+    // "HDPE (High-Density Polyethylene)": ["Blow Molded Bottles", "Crushed Flakes", "Unrefined Regrind"],
+    // "LDPE (Low-Density Polyethylene)": ["Clear Film Liners", "Colored Film Bales"],
+    // "Aluminum Closures": ["UBC Taint Tabor", "Litho Sheet Scrap"],
+    // "Aluminum Cans (UBCs)": ["Shredded UBC Bales", "Dense Clean Briquettes"]
   };
 
   // Computes active available options array based on the category chosen
@@ -96,7 +98,7 @@ export function Inventory() {
     setIsLoadingMatrix(true);
     try {
       const [resInv, resCat, resSup, resDrv] = await Promise.all([
-        fetch("/api/admin/inventory"),
+        fetch("/api/admin/inventory?status=pending"),
         fetch("/api/admin/feedstock"),
         fetch("/api/admin/users?role=supplier"),
         fetch("/api/admin/users?role=driver")
@@ -127,6 +129,7 @@ export function Inventory() {
       setFormSupplierId(editingItem.supplierId);
       setFormDriver(editingItem.driver);
       setFormDriverId(editingItem.driverId);
+      setFormStatus(editingItem.status);
     } else {
       clearFormFields();
     }
@@ -170,7 +173,8 @@ export function Inventory() {
       supplier: formSupplier,
       supplierId: formSupplierId,
       driver: formDriver,
-      driverId: formDriverId
+      driverId: formDriverId,
+      status: formStatus
     };
 
     const isEdit = !!editingItem;
@@ -236,6 +240,7 @@ export function Inventory() {
     setFormWeight("");
     setFormSupplier("");
     setFormDriver("");
+    setFormStatus("pending");
   };
 
   const totalVolume = useMemo(() => {
@@ -399,6 +404,25 @@ export function Inventory() {
                       )}
                     </select>
                   </div>
+
+                  
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Transit Dispatch Status </label>
+                    <select 
+                      value={formDriver} 
+                      onChange={(e) =>{
+                        setFormDriverId(e.target.value);
+                      }} 
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 font-semibold outline-hidden cursor-pointer focus:border-emerald-500"
+                    >
+                      <option value="">No Active Driver (Stored Statically inside Warehouse)</option>
+                      <option value="pending">Pending</option>
+                      <option value="in-transit">In Transit</option>
+                      <option value="delivered">Delivered</option>
+                    </select>
+                  </div>
+
                 </div>
 
                 <button type="submit" className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold uppercase tracking-wider text-xs transition-all shadow-md mt-4 active:scale-[0.99]">
@@ -544,7 +568,7 @@ export function Inventory() {
                       <td className="p-4 text-center whitespace-nowrap">
                         <span className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border", status.color)}>
                           <status.icon className="w-3.5 h-3.5" />
-                          {status.label}
+                          {item.status ? item.status.replace(/-/g, " ").toUpperCase() : ''}
                         </span>
                       </td>
                       <td className="p-4">

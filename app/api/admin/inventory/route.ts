@@ -3,13 +3,22 @@ import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 
 // --- GET: Fetch All Material Manifests ---
-export async function GET() {
+export async function GET(request: Request) {
   try {
+
+    const url = new URL(request.url);
+    const statusFilter = url.searchParams.get("status");
+
     const db = await getDatabase();
+    let query: Record<string, any> = {};
+    if (statusFilter) {
+      query.status = statusFilter;
+    }
+
     // Fetch items sorted by newest first
     const items = await db
       .collection("inventory")
-      .find({})
+      .find(query)
       .sort({ timestamp: -1 })
       .toArray();
 
@@ -21,6 +30,27 @@ export async function GET() {
     );
   }
 }
+
+// --- GET: Fetch All Material Manifests ---
+// export async function GET(request: Request) {
+//   try {
+
+//     const db = await getDatabase();
+//     // Fetch items sorted by newest first
+//     const items = await db
+//       .collection("inventory")
+//       .find({})
+//       .sort({ timestamp: -1 })
+//       .toArray();
+
+//     return NextResponse.json(items);
+//   } catch (error) {
+//     return NextResponse.json(
+//       { error: "Failed to fetch inventory matrix logs" },
+//       { status: 500 },
+//     );
+//   }
+// }
 
 // --- POST: Sync New Material with Central Ledger ---
 export async function POST(request: Request) {
@@ -45,7 +75,7 @@ export async function POST(request: Request) {
       weight: body.weight, // e.g., "12.4t"
       supplier: body.supplier,
       driver: body.driver || "",
-      status: "Active",
+      status: body.status || "pending", // Default status for new entries pending would indicate they are awaiting further processing or review
       timestamp: new Date(),
     };
 
