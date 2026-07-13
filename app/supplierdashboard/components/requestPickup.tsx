@@ -187,7 +187,7 @@ export function RequestPickup() {
               {availableHubs.length === 0 ? (
                 <option value="">No Hubs Available</option>
               ) : (
-                availableHubs.map((hub) => (
+                availableHubs.map((hub: any) => (
                   <option key={hub._id} value={hub._id}>
                     {hub.name} {hub.location ? `— ${hub.location.country}-${hub.location.city}` : ""}
                   </option>
