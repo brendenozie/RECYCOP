@@ -21,7 +21,7 @@ import { Inventory } from "./components/materialLedger";
 import { Analytics } from "./components/impactReports";
 import { RouteManager } from "./components/checkpoints";
 import AdminPaymentDashboard from "./components/adminPaymentDashboard";
-import FieldOfficerDashboard from "./components/operationsDashboard";
+import FieldOfficerDashboard  from "./components/operationsDashboard";
 
 const menuItems = [
   { id: "overview", label: "Overview", icon: Squares2X2Icon },
