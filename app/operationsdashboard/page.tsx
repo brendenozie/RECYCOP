@@ -27,10 +27,10 @@ const menuItems = [
   { id: "inventory", label: "Material Ledger", icon: ArchiveBoxIcon },
   { id: "hubs", label: "Regional Hubs", icon: MapIcon },
   { id: "checkpoints", label: "Checkpoints", icon: IdentificationIcon },
-  { id: "payouts", label: "Payouts", icon: CurrencyDollarIcon },
-  { id: "fleet-radar", label: "Fleet", icon: TruckIcon },
-  { id: "verifications", label: "Verify", icon: ArchiveBoxIcon },
-  { id: "analytics", label: "Stats", icon: ChartBarIcon },
+  // { id: "payouts", label: "Payouts", icon: CurrencyDollarIcon },
+  // { id: "fleet-radar", label: "Fleet", icon: TruckIcon },
+  // { id: "verifications", label: "Verify", icon: ArchiveBoxIcon },
+  // { id: "analytics", label: "Stats", icon: ChartBarIcon },
   
 ];
 

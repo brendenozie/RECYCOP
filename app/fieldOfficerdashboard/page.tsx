@@ -14,23 +14,24 @@ import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 // Components
-import OpsDashboard from "./components/operationsDashboard";
+
 import { Fleet } from "./components/fleetRadar";
 import { Hubs } from "./components/regionalHubs";
 import { Inventory } from "./components/materialLedger";
 import { Analytics } from "./components/impactReports";
 import { RouteManager } from "./components/checkpoints";
 import AdminPaymentDashboard from "./components/adminPaymentDashboard";
+import FieldOfficerDashboard from "./components/operationsDashboard";
 
 const menuItems = [
   { id: "overview", label: "Overview", icon: Squares2X2Icon },
   { id: "inventory", label: "Material Ledger", icon: ArchiveBoxIcon },
   { id: "hubs", label: "Regional Hubs", icon: MapIcon },
   { id: "checkpoints", label: "Checkpoints", icon: IdentificationIcon },
-  { id: "payouts", label: "Payouts", icon: CurrencyDollarIcon },
-  { id: "fleet-radar", label: "Fleet", icon: TruckIcon },
-  { id: "verifications", label: "Verify", icon: ArchiveBoxIcon },
-  { id: "analytics", label: "Stats", icon: ChartBarIcon },
+  // { id: "payouts", label: "Payouts", icon: CurrencyDollarIcon },
+  // { id: "fleet-radar", label: "Fleet", icon: TruckIcon },
+  // { id: "verifications", label: "Verify", icon: ArchiveBoxIcon },
+  // { id: "analytics", label: "Stats", icon: ChartBarIcon },
   
 ];
 
@@ -125,7 +126,7 @@ export default function MainOperationsLayout() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
               >
-                {activeTab === "overview" && <OpsDashboard />}
+                {activeTab === "overview" && <FieldOfficerDashboard />}
                 {activeTab === "fleet-radar" && <Fleet />}
                 {activeTab === "inventory" && <Inventory />}
                 {activeTab === "hubs" && <Hubs />}
