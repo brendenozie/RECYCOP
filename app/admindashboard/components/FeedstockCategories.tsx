@@ -26,6 +26,14 @@ type Feedstock = {
   status: string;
 };
 
+const INITIAL_FEEDSTOCKS = [
+  { id: "cat-1", name: "PP (Polypropylene)", group: "Polymers", grade: "Rigid Plastics", totalWeight: "4,250 kg", activeOrders: 8, status: "High Demand" },
+  { id: "cat-2", name: "HDPE (High-Density Polyethylene)", group: "Polymers", grade: "Crushed", totalWeight: "7,820 kg", activeOrders: 14, status: "High Demand" },
+  { id: "cat-3", name: "LDPE (Low-Density Polyethylene)", group: "Polymers", grade: "Flexible Films", totalWeight: "2,100 kg", activeOrders: 5, status: "Stable" },
+  { id: "cat-4", name: "Aluminum Closures", group: "Metals", grade: "Bottle Caps", totalWeight: "1,450 kg", activeOrders: 9, status: "High Demand" },
+  { id: "cat-5", name: "Aluminum Cans (UBCs)", group: "Metals", grade: "Used Beverage Cans", totalWeight: "11,340 kg", activeOrders: 22, status: "Critical" },
+];
+
 export function FeedstockCategories() {
   const [feedstocks, setFeedstocks] = useState<Feedstock[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<"All" | "Polymers" | "Metals">("All");

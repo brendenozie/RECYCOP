@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   TruckIcon, 
@@ -16,8 +16,34 @@ import {
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 
+// Define the expected shape of your database payload
+interface DashboardData {
+  monthlyWeight: number;
+  targetCapacity: number;
+  activeCenters: number;
+  carbonSavings: number;
+  carbonSavedThisWeek: number;
+  activeMembers: number;
+  ecoNetworks: number;
+  startingBaseline: number;
+  emptyTrucks: number;
+  materialsLedger: Array<{
+    hub: string;
+    mat: string;
+    qty: number;
+    status: string;
+  }>;
+  regionalStorage: Array<{
+    name: string;
+    cap: number;
+  }>;
+}
+
 const ProgressGauge = ({ current, target }: { current: number; target: number }) => {
-  const percentage = Math.min((current / target) * 100, 100);
+  // Prevent division by zero if target is missing
+  const safeTarget = target > 0 ? target : 1;
+  const percentage = Math.min((current / safeTarget) * 100, 100);
+  
   return (
     <div className="relative h-3 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
       <motion.div 
@@ -30,15 +56,76 @@ const ProgressGauge = ({ current, target }: { current: number; target: number })
   );
 };
 
-// --- Humanized & Understandable Data Layers ---
-const stats = [
-  { label: "Monthly Recycling Weight", value: "64.2 Tons", sub: "Monthly Target: 100T", icon: CircleStackIcon, color: "emerald" },
-  { label: "Active Collection Centers", value: "6 Hubs", sub: "Nairobi to Mombasa Route", icon: MapIcon, color: "purple" },
-  { label: "Carbon Savings (CO2 Offset)", value: "128.5 MT", sub: "+14.2 Tons saved this week", icon: SparklesIcon, color: "emerald" },
-  { label: "Active Cooperative Members", value: "412 Members", sub: "16 Eco-Product Networks", icon: UserGroupIcon, color: "purple" },
-];
-
 export function CommandCenter() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Replace with your actual API route path
+        const response = await fetch('/api/admin/dashboard/operations');
+        if (!response.ok) throw new Error("Failed to fetch data");
+        const json = await response.json();
+        setData(json.data);
+      } catch (error) {
+        console.error("Error fetching dashboard stats:", error);
+        // On error, leave data as null to trigger the '0' fallbacks
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // Strict Fallbacks: If data is missing or undefined, default to 0 or empty arrays
+  const statsData = {
+    monthlyWeight: data?.monthlyWeight || 0,
+    targetCapacity: data?.targetCapacity || 0,
+    activeCenters: data?.activeCenters || 0,
+    carbonSavings: data?.carbonSavings || 0,
+    carbonSavedThisWeek: data?.carbonSavedThisWeek || 0,
+    activeMembers: data?.activeMembers || 0,
+    ecoNetworks: data?.ecoNetworks || 0,
+    startingBaseline: data?.startingBaseline || 0,
+    emptyTrucks: data?.emptyTrucks || 0,
+    materialsLedger: data?.materialsLedger || [],
+    regionalStorage: data?.regionalStorage || []
+  };
+
+  // Dynamic Stats Configuration
+  const stats = [
+    { 
+      label: "Monthly Recycling Weight", 
+      value: `${statsData.monthlyWeight} Tons`, 
+      sub: `Monthly Target: ${statsData.targetCapacity}T`, 
+      icon: CircleStackIcon, 
+      color: "emerald" 
+    },
+    { 
+      label: "Active Collection Centers", 
+      value: `${statsData.activeCenters} Hubs`, 
+      sub: "Nairobi to Mombasa Route", 
+      icon: MapIcon, 
+      color: "purple" 
+    },
+    { 
+      label: "Carbon Savings (CO2 Offset)", 
+      value: `${statsData.carbonSavings} MT`, 
+      sub: `+${statsData.carbonSavedThisWeek} Tons saved this week`, 
+      icon: SparklesIcon, 
+      color: "emerald" 
+    },
+    { 
+      label: "Active Cooperative Members", 
+      value: `${statsData.activeMembers} Members`, 
+      sub: `${statsData.ecoNetworks} Eco-Product Networks`, 
+      icon: UserGroupIcon, 
+      color: "purple" 
+    },
+  ];
+
   return (
     <div className="space-y-10">
       
@@ -88,8 +175,13 @@ export function CommandCenter() {
               )}>
                 <stat.icon className="w-5 h-5 stroke-[2px]" />
               </div>
-              <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded-md tracking-normal">
-                Live Syncing
+              <div className={cn(
+                "text-[11px] font-bold px-2.5 py-1 rounded-md tracking-normal",
+                isLoading 
+                  ? "text-slate-400 bg-slate-100 dark:bg-slate-800" 
+                  : "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10"
+              )}>
+                {isLoading ? "Syncing..." : "Live Syncing"}
               </div>
             </div>
             
@@ -113,23 +205,25 @@ export function CommandCenter() {
             <div className="flex justify-between items-end mb-6">
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Capacity Growth Tracker</h3>
-                <p className="text-slate-500 dark:text-purple-100/60 text-sm">Scaling operational flows toward 100 tons monthly throughput targets.</p>
+                <p className="text-slate-500 dark:text-purple-100/60 text-sm">Scaling operational flows toward {statsData.targetCapacity} tons monthly throughput targets.</p>
               </div>
-              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">64%</span>
+              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                {statsData.targetCapacity > 0 ? Math.round((statsData.monthlyWeight / statsData.targetCapacity) * 100) : 0}%
+              </span>
             </div>
-            <ProgressGauge current={64.2} target={100} />
+            <ProgressGauge current={statsData.monthlyWeight} target={statsData.targetCapacity} />
             <div className="grid grid-cols-3 mt-6 pt-6 border-t border-slate-100 dark:border-white/5 text-sm">
                <div>
                  <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 mb-0.5">Starting baseline</p>
-                 <p className="font-bold text-slate-700 dark:text-purple-100">15 Tons</p>
+                 <p className="font-bold text-slate-700 dark:text-purple-100">{statsData.startingBaseline} Tons</p>
                </div>
                <div className="text-center">
                  <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 mb-0.5">Current weight</p>
-                 <p className="font-bold text-emerald-600 dark:text-emerald-400">64.2 Tons</p>
+                 <p className="font-bold text-emerald-600 dark:text-emerald-400">{statsData.monthlyWeight} Tons</p>
                </div>
                <div className="text-right">
                  <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 mb-0.5">Our destination</p>
-                 <p className="font-bold text-slate-700 dark:text-purple-100">100 Tons</p>
+                 <p className="font-bold text-slate-700 dark:text-purple-100">{statsData.targetCapacity} Tons</p>
                </div>
             </div>
           </div>
@@ -145,11 +239,12 @@ export function CommandCenter() {
              </div>
              
              <div className="space-y-3">
-               {[
-                 { hub: "Mombasa Gateway", mat: "HDPE Hard Plastics", qty: "4.2 Tons", status: "Verified" },
-                 { hub: "Nairobi Central Hub", mat: "Raw Aluminum Scrap", qty: "1.8 Tons", status: "In Transit" },
-                 { hub: "Kisumu North Facility", mat: "PP Bottle Caps", qty: "0.9 Tons", status: "Verified" }
-               ].map((row, i) => (
+               {statsData.materialsLedger.length === 0 && !isLoading && (
+                 <div className="text-center py-6 text-slate-500 text-sm">
+                   No recent collections recorded.
+                 </div>
+               )}
+               {statsData.materialsLedger.map((row, i) => (
                  <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-white/[0.01] border border-slate-100 dark:border-white/5 hover:border-emerald-500/20 transition-all">
                     <div className="flex items-center gap-3.5">
                       <div className="h-9 w-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm">
@@ -161,7 +256,7 @@ export function CommandCenter() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-sm text-emerald-600 dark:text-emerald-400">{row.qty}</p>
+                      <p className="font-bold text-sm text-emerald-600 dark:text-emerald-400">{row.qty} Tons</p>
                       <span className={cn(
                         "text-[11px] font-semibold", 
                         row.status === "Verified" ? "text-emerald-500" : "text-amber-500"
@@ -185,7 +280,7 @@ export function CommandCenter() {
               </div>
               <h3 className="text-lg font-bold mb-2 tracking-tight text-white font-sans">Empty Truck Tracker</h3>
               <p className="text-white/60 text-xs mb-8 leading-relaxed font-medium">
-                8 connected logistics providers are currently traveling empty on return legs within the <span className="text-emerald-400 font-semibold">Thika to Nairobi</span> corridor routes.
+                {statsData.emptyTrucks} connected logistics providers are currently traveling empty on return legs within the corridor routes.
               </p>
               <button className="w-full py-3 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 transition-all shadow-md shadow-emerald-500/10">
                  Optimize Return Legs
@@ -199,18 +294,19 @@ export function CommandCenter() {
                 Regional Facility Storage
               </h3>
               <div className="space-y-4">
-                 {[
-                   { name: "Nairobi Central", cap: 85 },
-                   { name: "Mombasa Gateway", cap: 42 },
-                   { name: "Kisumu Facility", cap: 28 },
-                 ].map((hub) => (
+                 {statsData.regionalStorage.length === 0 && !isLoading && (
+                   <div className="text-center py-4 text-slate-500 text-xs">
+                     No regional data available.
+                   </div>
+                 )}
+                 {statsData.regionalStorage.map((hub) => (
                    <div key={hub.name} className="space-y-1.5">
                      <div className="flex justify-between text-xs font-semibold">
                        <span className="text-slate-500 dark:text-purple-100/60">{hub.name}</span>
                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">{hub.cap}% full</span>
                      </div>
                      <div className="h-1.5 w-full bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
-                       <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${hub.cap}%` }} />
+                       <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${hub.cap}%` }} />
                      </div>
                    </div>
                  ))}
