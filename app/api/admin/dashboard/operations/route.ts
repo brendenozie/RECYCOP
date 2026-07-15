@@ -1,14 +1,14 @@
-// import { getDatabase } from "@/lib/mongodb";
-// import { NextResponse } from "next/server";
-// import { ObjectId } from "mongodb";
+import { getDatabase } from "@/lib/mongodb";
+import { NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
 
-// export async function GET() {
-//   try {
+export async function GET() {
+  try {
 
-//     const db = await getDatabase();
+    const db = await getDatabase();
 
-//     const now = new Date();
-//     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
 //     // Calculate 7 days ago for weekly carbon metrics
 //     const sevenDaysAgo = new Date();
@@ -124,28 +124,28 @@
 //     };
 
 //     return NextResponse.json(responsePayload, { status: 200 });
-//   } catch (error) {
-//     console.error("Dashboard API Error:", error);
+  } catch (error) {
+    console.error("Dashboard API Error:", error);
 
-//     // Safety Fallback Response: Return structurally valid empty data if db queries throw errors
-//     return NextResponse.json(
-//       {
-//         error: "Internal Server Error",
-//         data: {
-//           monthlyWeight: 0,
-//           targetCapacity: 0,
-//           activeCenters: 0,
-//           carbonSavings: 0,
-//           carbonSavedThisWeek: 0,
-//           activeMembers: 0,
-//           ecoNetworks: 0,
-//           startingBaseline: 0,
-//           emptyTrucks: 0,
-//           materialsLedger: [],
-//           regionalStorage: [],
-//         },
-//       },
-//       { status: 500 },
-//     );
-//   }
-// }
+    // Safety Fallback Response: Return structurally valid empty data if db queries throw errors
+    return NextResponse.json(
+      {
+        error: "Internal Server Error",
+        data: {
+          monthlyWeight: 0,
+          targetCapacity: 0,
+          activeCenters: 0,
+          carbonSavings: 0,
+          carbonSavedThisWeek: 0,
+          activeMembers: 0,
+          ecoNetworks: 0,
+          startingBaseline: 0,
+          emptyTrucks: 0,
+          materialsLedger: [],
+          regionalStorage: [],
+        },
+      },
+      { status: 500 },
+    );
+  }
+}
